@@ -9,6 +9,9 @@ using System.Linq;
 using System.Timers;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Text.Json;
+using System.Text.Json.Serialization;
+using System.IO;
 
 namespace ymzx
 {
@@ -98,8 +101,8 @@ namespace ymzx
                 Task automationTask;
                 if (form1.checkBoxNoMonthlyCard.Checked)
                 {
-                    // 显示手动循环设置窗体
-                    using (var settingsForm = new ManualLoopSettingsForm())
+                    // 显示手动循环设置窗体，传入当前进程ID
+                    using (var settingsForm = new ManualLoopSettingsForm(Process.GetCurrentProcess().Id))
                     {
                         if (settingsForm.ShowDialog() == DialogResult.OK)
                         {
@@ -370,7 +373,24 @@ namespace ymzx
                         // 重新启动主循环
                         if (mainForm.checkBoxNoMonthlyCard.Checked)
                         {
-                            _ = RunManualLoop(mainForm.webView2, automationCts.Token);
+                            // 加载保存的设置
+                            var settings = LoadManualSettings();
+                            if (settings != null)
+                            {
+                                _ = RunManualLoop(
+                                    mainForm.webView2, 
+                                    automationCts.Token,
+                                    settings.FarmRanchTimes,
+                                    settings.ExecuteWorkshop,
+                                    settings.ExecuteFishing,
+                                    settings.FishingCount
+                                );
+                            }
+                            else
+                            {
+                                // 如果没有保存的设置，使用默认值
+                                _ = RunManualLoop(mainForm.webView2, automationCts.Token);
+                            }
                         }
                         else
                         {
@@ -392,6 +412,30 @@ namespace ymzx
                     }
                 }
             }
+        }
+
+        // 修改加载设置的方法，使用进程ID
+        private static ManualLoopSettingsForm.ManualSettings? LoadManualSettings()
+        {
+            try
+            {
+                string settingsPath = Path.Combine(
+                    Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                    "YmzxHelper",
+                    $"manual_settings_{Process.GetCurrentProcess().Id}.json"
+                );
+
+                if (File.Exists(settingsPath))
+                {
+                    string jsonString = File.ReadAllText(settingsPath);
+                    return JsonSerializer.Deserialize<ManualLoopSettingsForm.ManualSettings>(jsonString);
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"加载手动设置失败: {ex.Message}");
+            }
+            return null;
         }
 
         // 自动化循环操作（有月卡版本）

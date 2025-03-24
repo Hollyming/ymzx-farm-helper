@@ -1,5 +1,7 @@
 using System;
 using System.Windows.Forms;
+using System.IO;
+using System.Text.Json;
 
 namespace ymzx
 {
@@ -11,15 +13,23 @@ namespace ymzx
         private NumericUpDown numericUpDownFishingCount;
         private Button btnOK;
         private Button btnCancel;
+        private readonly string settingsFilePath;
 
         public int FarmRanchTimes { get; private set; } = 2;
         public bool ExecuteWorkshop { get; private set; } = true;
         public bool ExecuteFishing { get; private set; } = false;
         public int FishingCount { get; private set; } = 24;
 
-        public ManualLoopSettingsForm()
+        public ManualLoopSettingsForm(int processId)
         {
+            settingsFilePath = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                "YmzxHelper",
+                $"manual_settings_{processId}.json"
+            );
+            
             InitializeComponents();
+            LoadSettings();
         }
 
         private void InitializeComponents()
@@ -115,6 +125,58 @@ namespace ymzx
             this.Controls.Add(btnCancel);
         }
 
+        private void LoadSettings()
+        {
+            try
+            {
+                if (File.Exists(settingsFilePath))
+                {
+                    string jsonString = File.ReadAllText(settingsFilePath);
+                    var settings = JsonSerializer.Deserialize<ManualSettings>(jsonString);
+                    
+                    if (settings != null)
+                    {
+                        comboBoxFarmRanchTimes.SelectedIndex = settings.FarmRanchTimes;
+                        checkBoxWorkshop.Checked = settings.ExecuteWorkshop;
+                        checkBoxFishing.Checked = settings.ExecuteFishing;
+                        numericUpDownFishingCount.Value = settings.FishingCount;
+                        numericUpDownFishingCount.Enabled = settings.ExecuteFishing;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"加载设置失败: {ex.Message}");
+            }
+        }
+
+        private void SaveSettings()
+        {
+            try
+            {
+                var settings = new ManualSettings
+                {
+                    FarmRanchTimes = int.Parse(comboBoxFarmRanchTimes.SelectedItem.ToString()),
+                    ExecuteWorkshop = checkBoxWorkshop.Checked,
+                    ExecuteFishing = checkBoxFishing.Checked,
+                    FishingCount = (int)numericUpDownFishingCount.Value
+                };
+
+                string directory = Path.GetDirectoryName(settingsFilePath);
+                if (!Directory.Exists(directory))
+                {
+                    Directory.CreateDirectory(directory);
+                }
+
+                string jsonString = JsonSerializer.Serialize(settings);
+                File.WriteAllText(settingsFilePath, jsonString);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"保存设置失败: {ex.Message}");
+            }
+        }
+
         private void CheckBoxFishing_CheckedChanged(object sender, EventArgs e)
         {
             numericUpDownFishingCount.Enabled = checkBoxFishing.Checked;
@@ -126,6 +188,17 @@ namespace ymzx
             ExecuteWorkshop = checkBoxWorkshop.Checked;
             ExecuteFishing = checkBoxFishing.Checked;
             FishingCount = (int)numericUpDownFishingCount.Value;
+            
+            SaveSettings();
+        }
+
+        // 添加设置类
+        public class ManualSettings
+        {
+            public int FarmRanchTimes { get; set; }
+            public bool ExecuteWorkshop { get; set; }
+            public bool ExecuteFishing { get; set; }
+            public int FishingCount { get; set; }
         }
     }
 } 
