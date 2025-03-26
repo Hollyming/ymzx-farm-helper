@@ -32,7 +32,7 @@ namespace ymzx
             InitializeComponent();
             ControlActions.SetMainForm(this);  // 设置主窗体引用
             // 设置主窗体属性
-            this.Text = "元梦之星农场助手 2.5 GPU启用版+无月卡可用";
+            this.Text = "ymzxhelper 3.0";
             this.FormBorderStyle = FormBorderStyle.FixedSingle;
             this.MaximizeBox = false;
             this.ClientSize = new Size(960, 580);
@@ -43,6 +43,9 @@ namespace ymzx
 
             // 在窗体加载时初始化 WebView2 控件
             this.Load += Form1_Load;
+
+            // 添加窗体关闭事件处理
+            this.FormClosed += Form1_FormClosed;
         }
 
         private void InitializeControls()
@@ -120,7 +123,7 @@ namespace ymzx
             btnGithub.Click += (sender, e) => {
                 try
                 {
-                    Process.Start(new ProcessStartInfo("https://github.com/Hollyming") { UseShellExecute = true });
+                    Process.Start(new ProcessStartInfo("https://github.com/Hollyming/ymzx-farm-helper") { UseShellExecute = true });
                 }
                 catch (Exception ex)
                 {
@@ -259,6 +262,41 @@ namespace ymzx
             catch (Exception ex)
             {
                 MessageBox.Show("WebView2 初始化失败: " + ex.Message);
+            }
+        }
+
+        private void Form1_FormClosed(object sender, FormClosedEventArgs e)
+        {
+            try
+            {
+                // 清理当前进程的设置文件
+                string settingsPath = Path.Combine(
+                    Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                    "YmzxHelper",
+                    $"manual_settings_{Process.GetCurrentProcess().Id}.json"
+                );
+
+                if (File.Exists(settingsPath))
+                {
+                    File.Delete(settingsPath);
+                }
+
+                // 清理用户数据目录
+                if (Directory.Exists(userDataFolder))
+                {
+                    try
+                    {
+                        Directory.Delete(userDataFolder, true);
+                    }
+                    catch (Exception ex)
+                    {
+                        Debug.WriteLine($"清理用户数据目录时出错: {ex.Message}");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"清理设置文件时出错: {ex.Message}");
             }
         }
     }
