@@ -86,9 +86,7 @@ namespace ymzx
         // "开始/停止"按钮点击事件
         public static async void BtnStartStop_Click(object? sender, EventArgs e)
         {
-            // 获取当前 Form1 实例
-            if (!(sender is Button btn)) return;
-            Form form = btn.FindForm();
+            if (sender is not Button btn || btn.Parent is not Form form) return;
             if (!(form is Form1 form1)) return;
 
             if (automationCts == null)
@@ -132,8 +130,14 @@ namespace ymzx
 
                 _ = automationTask.ContinueWith(t =>
                 {
+                    if (t.IsFaulted)
+                    {
+                        Console.WriteLine($"Automation task failed: {t.Exception}");
+                    }
                     // 循环结束后在 UI 线程中恢复按钮文字
                     form.Invoke((Action)(() => 
+
+                    form1.Invoke(() =>
                     { 
                         // 只有在不是因为定时任务而取消时才改变按钮文字
                         if (scheduledTaskCts == null)
@@ -141,13 +145,14 @@ namespace ymzx
                             btn.Text = "开始/停止";
                             automationCts = null;
                         }
-                    }));
+                    });
                 });
             }
             else
             {
                 // 停止自动化循环
                 automationCts.Cancel();
+                automationCts.Dispose(); // 添加Dispose调用
                 automationCts = null;
                 btn.Text = "开始/停止";
             }
