@@ -28,7 +28,7 @@ namespace ymzx
             InitializeComponent();
             ControlActions.SetMainForm(this);  // 设置主窗体引用
             // 设置主窗体属性
-            this.Text = "元梦之星农场助手 2.5 GPU启用版+无月卡可用";
+            this.Text = "元梦之星农场助手dev";
             this.FormBorderStyle = FormBorderStyle.FixedSingle;
             this.MaximizeBox = false;
             this.ClientSize = new Size(960, 580);

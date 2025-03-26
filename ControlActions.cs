@@ -134,10 +134,9 @@ namespace ymzx
                     {
                         Console.WriteLine($"Automation task failed: {t.Exception}");
                     }
+                    
                     // 循环结束后在 UI 线程中恢复按钮文字
-                    form.Invoke((Action)(() => 
-
-                    form1.Invoke(() =>
+                    form1.Invoke(() => 
                     { 
                         // 只有在不是因为定时任务而取消时才改变按钮文字
                         if (scheduledTaskCts == null)

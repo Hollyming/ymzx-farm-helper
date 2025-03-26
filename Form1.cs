@@ -7,8 +7,8 @@ using Microsoft.Web.WebView2.Core;
 using System.Diagnostics;
 using System.IO;
 
-// ·¢²¼ÃüÁî£ºdotnet publish -c Release -r win-x64 --self-contained false
-// ²âÊÔÃüÁî£ºdotnet run
+// å‘å¸ƒå‘½ä»¤ï¼šdotnet publish -c Release -r win-x64 --self-contained false
+// æµ‹è¯•å‘½ä»¤ï¼šdotnet run
 
 namespace ymzx
 {
@@ -16,7 +16,7 @@ namespace ymzx
     {
         private Button btnStartStop;
         private Button btnRefresh;
-        private Button btnClearCache; // ¸ÄÃû£º´ÓbtnVersionUpdate¸ÄÎªbtnClearCache
+        private Button btnClearCache; // æ”¹åï¼šä»btnVersionUpdateæ”¹ä¸ºbtnClearCache
         private Button btnFarmGuide;
         private Button btnScheduledTasks;
         private Button btnGithub;
@@ -24,42 +24,42 @@ namespace ymzx
         internal CheckBox checkBoxNoMonthlyCard;
         internal WebView2 webView2;
         
-        // ¼ÇÂ¼µ±Ç°ÊµÀıµÄÓÃ»§Êı¾İÄ¿Â¼
+        // è®°å½•å½“å‰å®ä¾‹çš„ç”¨æˆ·æ•°æ®ç›®å½•
         private string userDataFolder;
 
         public Form1()
         {
             InitializeComponent();
-            ControlActions.SetMainForm(this);  // ÉèÖÃÖ÷´°ÌåÒıÓÃ
-            // ÉèÖÃÖ÷´°ÌåÊôĞÔ
+            ControlActions.SetMainForm(this);  // è®¾ç½®ä¸»çª—ä½“å¼•ç”¨
+            // è®¾ç½®ä¸»çª—ä½“å±æ€§
             this.Text = "ymzxhelper 3.0";
             this.FormBorderStyle = FormBorderStyle.FixedSingle;
             this.MaximizeBox = false;
             this.ClientSize = new Size(960, 580);
-            this.Icon = new Icon("./app.ico");  // ´ÓÏîÄ¿¸ùÄ¿Â¼¼ÓÔØÍ¼±ê
+            this.Icon = new Icon("./app.ico");  // ä»é¡¹ç›®æ ¹ç›®å½•åŠ è½½å›¾æ ‡
 
-            // ³õÊ¼»¯ËùÓĞ¿Ø¼ş
+            // åˆå§‹åŒ–æ‰€æœ‰æ§ä»¶
             InitializeControls();
 
-            // ÔÚ´°Ìå¼ÓÔØÊ±³õÊ¼»¯ WebView2 ¿Ø¼ş
+            // åœ¨çª—ä½“åŠ è½½æ—¶åˆå§‹åŒ– WebView2 æ§ä»¶
             this.Load += Form1_Load;
 
-            // Ìí¼Ó´°Ìå¹Ø±ÕÊÂ¼ş´¦Àí
+            // æ·»åŠ çª—ä½“å…³é—­äº‹ä»¶å¤„ç†
             this.FormClosed += Form1_FormClosed;
         }
 
         private void InitializeControls()
         {
-            // µÚÒ»ĞĞÇøÓò£º°´Å¥ºÍGPUÑ¡Ïî
+            // ç¬¬ä¸€è¡ŒåŒºåŸŸï¼šæŒ‰é’®å’ŒGPUé€‰é¡¹
             int buttonWidth = 100;
             int buttonHeight = 30;
             int spacing = 5;
             int startX = spacing;
             int startY = spacing;
 
-            // "¿ªÊ¼/Í£Ö¹"°´Å¥
+            // "å¼€å§‹/åœæ­¢"æŒ‰é’®
             btnStartStop = new Button();
-            btnStartStop.Text = "¿ªÊ¼/Í£Ö¹";
+            btnStartStop.Text = "å¼€å§‹/åœæ­¢";
             btnStartStop.Size = new Size(buttonWidth, buttonHeight);
             btnStartStop.Location = new Point(startX, startY);
             btnStartStop.FlatStyle = FlatStyle.Flat;
@@ -68,9 +68,9 @@ namespace ymzx
             btnStartStop.Click += ControlActions.BtnStartStop_Click;
             this.Controls.Add(btnStartStop);
 
-            // "Ë¢ĞÂ"°´Å¥
+            // "åˆ·æ–°"æŒ‰é’®
             btnRefresh = new Button();
-            btnRefresh.Text = "Ë¢ĞÂ";
+            btnRefresh.Text = "åˆ·æ–°";
             btnRefresh.Size = new Size(buttonWidth, buttonHeight);
             btnRefresh.Location = new Point(startX + (buttonWidth + spacing) * 1, startY);
             btnRefresh.FlatStyle = FlatStyle.Flat;
@@ -79,9 +79,9 @@ namespace ymzx
             btnRefresh.Click += ControlActions.BtnRefresh_Click;
             this.Controls.Add(btnRefresh);
 
-            // "ÇåÀí»º´æ"°´Å¥ (Ô­"°æ±¾¸üĞÂ"°´Å¥)
+            // "æ¸…ç†ç¼“å­˜"æŒ‰é’® (åŸ"ç‰ˆæœ¬æ›´æ–°"æŒ‰é’®)
             btnClearCache = new Button();
-            btnClearCache.Text = "ÇåÀí»º´æ";
+            btnClearCache.Text = "æ¸…ç†ç¼“å­˜";
             btnClearCache.Size = new Size(buttonWidth, buttonHeight);
             btnClearCache.Location = new Point(startX + (buttonWidth + spacing) * 2, startY);
             btnClearCache.FlatStyle = FlatStyle.Flat;
@@ -90,9 +90,9 @@ namespace ymzx
             btnClearCache.Click += ControlActions.BtnClearCache_Click;
             this.Controls.Add(btnClearCache);
 
-            // "Íµ²Ë"°´Å¥
+            // "å·èœ"æŒ‰é’®
             btnFarmGuide = new Button();
-            btnFarmGuide.Text = "Íµ²Ë";
+            btnFarmGuide.Text = "å·èœ";
             btnFarmGuide.Size = new Size(buttonWidth, buttonHeight);
             btnFarmGuide.Location = new Point(startX + (buttonWidth + spacing) * 3, startY);
             btnFarmGuide.FlatStyle = FlatStyle.Flat;
@@ -101,9 +101,9 @@ namespace ymzx
             btnFarmGuide.Click += ControlActions.BtnStealing_Click;
             this.Controls.Add(btnFarmGuide);
 
-            // "¶¨Ê±ÈÎÎñ"°´Å¥
+            // "å®šæ—¶ä»»åŠ¡"æŒ‰é’®
             btnScheduledTasks = new Button();
-            btnScheduledTasks.Text = "¶¨Ê±ÈÎÎñ";
+            btnScheduledTasks.Text = "å®šæ—¶ä»»åŠ¡";
             btnScheduledTasks.Size = new Size(buttonWidth, buttonHeight);
             btnScheduledTasks.Location = new Point(startX + (buttonWidth + spacing) * 4, startY);
             btnScheduledTasks.FlatStyle = FlatStyle.Flat;
@@ -112,7 +112,7 @@ namespace ymzx
             btnScheduledTasks.Click += new System.EventHandler(ControlActions.BtnScheduledTasks_Click);
             this.Controls.Add(btnScheduledTasks);
 
-            // "Github"°´Å¥
+            // "Github"æŒ‰é’®
             btnGithub = new Button();
             btnGithub.Text = "Github";
             btnGithub.Size = new Size(buttonWidth, buttonHeight);
@@ -127,14 +127,14 @@ namespace ymzx
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show("ÎŞ·¨´ò¿ªÁ´½Ó: " + ex.Message);
+                    MessageBox.Show("æ— æ³•æ‰“å¼€é“¾æ¥: " + ex.Message);
                 }
             };
             this.Controls.Add(btnGithub);
 
-            // "±Ø¶Á"°´Å¥
+            // "å¿…è¯»"æŒ‰é’®
             Button btnMustRead = new Button();
-            btnMustRead.Text = "±Ø¶Á";
+            btnMustRead.Text = "å¿…è¯»";
             btnMustRead.Size = new Size(buttonWidth, buttonHeight);
             btnMustRead.Location = new Point(startX + (buttonWidth + spacing) * 6, startY);
             btnMustRead.FlatStyle = FlatStyle.Flat;
@@ -143,26 +143,26 @@ namespace ymzx
             btnMustRead.Click += ControlActions.BtnMustRead_Click;
             this.Controls.Add(btnMustRead);
 
-            // ×îÓÒ±ßÌí¼Ó GPU ÆôÓÃÑ¡ÏîºÍÎŞÔÂ¿¨°æ±¾Ñ¡Ïî
+            // æœ€å³è¾¹æ·»åŠ  GPU å¯ç”¨é€‰é¡¹å’Œæ— æœˆå¡ç‰ˆæœ¬é€‰é¡¹
             checkBoxGPU = new CheckBox();
-            checkBoxGPU.Text = "ÆôÓÃGPU";
-            checkBoxGPU.Checked = true; // ¹Ì¶¨ÎªÆôÓÃGPU
-            checkBoxGPU.Enabled = false; // ½ûÓÃÓÃ»§²Ù×÷£¬²»¿É¸ü¸Ä
+            checkBoxGPU.Text = "å¯ç”¨GPU";
+            checkBoxGPU.Checked = true; // å›ºå®šä¸ºå¯ç”¨GPU
+            checkBoxGPU.Enabled = false; // ç¦ç”¨ç”¨æˆ·æ“ä½œï¼Œä¸å¯æ›´æ”¹
             checkBoxGPU.Size = new Size(100, buttonHeight);
-            // ·ÅÖÃÔÚµ¹ÊıµÚ¶ş¸öÎ»ÖÃ
+            // æ”¾ç½®åœ¨å€’æ•°ç¬¬äºŒä¸ªä½ç½®
             checkBoxGPU.Location = new Point(this.ClientSize.Width - 200 - spacing, startY);
             this.Controls.Add(checkBoxGPU);
 
-            // Ìí¼ÓÎŞÔÂ¿¨°æ±¾¸´Ñ¡¿ò
+            // æ·»åŠ æ— æœˆå¡ç‰ˆæœ¬å¤é€‰æ¡†
             checkBoxNoMonthlyCard = new CheckBox();
-            checkBoxNoMonthlyCard.Text = "ÎŞÔÂ¿¨°æ±¾";
-            checkBoxNoMonthlyCard.Checked = false; // Ä¬ÈÏ²»ÆôÓÃ
+            checkBoxNoMonthlyCard.Text = "æ— æœˆå¡ç‰ˆæœ¬";
+            checkBoxNoMonthlyCard.Checked = false; // é»˜è®¤ä¸å¯ç”¨
             checkBoxNoMonthlyCard.Size = new Size(100, buttonHeight);
-            // ·ÅÖÃÔÚ×îÓÒ±ß
+            // æ”¾ç½®åœ¨æœ€å³è¾¹
             checkBoxNoMonthlyCard.Location = new Point(this.ClientSize.Width - 100 - spacing, startY);
             this.Controls.Add(checkBoxNoMonthlyCard);
 
-            // µÚ¶şĞĞÇøÓò£ºWebView2 ¿Ø¼ş£¬ÎŞ±ß¿ò£¬Î»ÖÃ½ôÌùµÚÒ»ĞĞÏÂ·½
+            // ç¬¬äºŒè¡ŒåŒºåŸŸï¼šWebView2 æ§ä»¶ï¼Œæ— è¾¹æ¡†ï¼Œä½ç½®ç´§è´´ç¬¬ä¸€è¡Œä¸‹æ–¹
             webView2 = new WebView2();
             webView2.Location = new Point(0, buttonHeight + 2 * spacing);
             webView2.Size = new Size(960, 540);
@@ -174,34 +174,34 @@ namespace ymzx
             await InitializeWebView2();
         }
 
-        // ¸ù¾İ GPU Ñ¡Ïî³õÊ¼»¯ WebView2 ¿Ø¼ş£¬²¢Ö§³Ö¶à¿ª
+        // æ ¹æ® GPU é€‰é¡¹åˆå§‹åŒ– WebView2 æ§ä»¶ï¼Œå¹¶æ”¯æŒå¤šå¼€
         public async Task InitializeWebView2()
         {
             try
             {
-                // ´´½¨Ò»¸ö»ùÓÚµ±Ç°½ø³ÌIDºÍÊ±¼ä´ÁµÄÎ¨Ò»ÓÃ»§Êı¾İÎÄ¼ş¼Ğ
+                // åˆ›å»ºä¸€ä¸ªåŸºäºå½“å‰è¿›ç¨‹IDå’Œæ—¶é—´æˆ³çš„å”¯ä¸€ç”¨æˆ·æ•°æ®æ–‡ä»¶å¤¹
                 string baseFolder = Path.Combine(
                     Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
                     "YmzxHelper", "UserData");
                 
-                // È·±£»ù´¡Ä¿Â¼´æÔÚ
+                // ç¡®ä¿åŸºç¡€ç›®å½•å­˜åœ¨
                 if (!Directory.Exists(baseFolder))
                 {
                     Directory.CreateDirectory(baseFolder);
                 }
                 
-                // ´´½¨»ùÓÚ½ø³ÌIDºÍÊ±¼ä´ÁµÄÎ¨Ò»ÎÄ¼ş¼ĞÃû
+                // åˆ›å»ºåŸºäºè¿›ç¨‹IDå’Œæ—¶é—´æˆ³çš„å”¯ä¸€æ–‡ä»¶å¤¹å
                 int processId = Process.GetCurrentProcess().Id;
                 string timestamp = DateTime.Now.ToString("yyyyMMddHHmmssfff");
                 userDataFolder = Path.Combine(baseFolder, $"Instance_{processId}_{timestamp}");
                 
-                // È·±£ÓÃ»§Êı¾İÄ¿Â¼´æÔÚ
+                // ç¡®ä¿ç”¨æˆ·æ•°æ®ç›®å½•å­˜åœ¨
                 if (!Directory.Exists(userDataFolder))
                 {
                     Directory.CreateDirectory(userDataFolder);
                 }
                 
-                // ÅäÖÃWebView2»·¾³Ñ¡Ïî
+                // é…ç½®WebView2ç¯å¢ƒé€‰é¡¹
                 var options = new CoreWebView2EnvironmentOptions();
                 if (!checkBoxGPU.Checked)
                 {
@@ -210,58 +210,58 @@ namespace ymzx
                 else
                 {
                     // options.AdditionalBrowserArguments = "--enable-gpu";
-                    /*Ê¹ÓÃ¸ßĞÔÄÜGPU*/
+                    /*ä½¿ç”¨é«˜æ€§èƒ½GPU*/
                     options.AdditionalBrowserArguments = "--use-angle=d3d11 --gpu-preference=high-performance";
                 }
                 
-                // ´´½¨WebView2»·¾³£¬Ö¸¶¨Î¨Ò»µÄÓÃ»§Êı¾İÄ¿Â¼
+                // åˆ›å»ºWebView2ç¯å¢ƒï¼ŒæŒ‡å®šå”¯ä¸€çš„ç”¨æˆ·æ•°æ®ç›®å½•
                 var env = await CoreWebView2Environment.CreateAsync(null, userDataFolder, options);
                 await webView2.EnsureCoreWebView2Async(env);
                 
-                // »ñÈ¡ÏµÍ³DPIËõ·Å±ÈÀı
+                // è·å–ç³»ç»ŸDPIç¼©æ”¾æ¯”ä¾‹
                 float dpiScale;
                 using (var graphics = this.CreateGraphics())
                 {
-                    dpiScale = graphics.DpiX / 96.0f; // ±ê×¼DPIÊÇ96
+                    dpiScale = graphics.DpiX / 96.0f; // æ ‡å‡†DPIæ˜¯96
                 }
                 
-                // ÉèÖÃWebView2µÄËõ·ÅÒò×ÓÒÔÊÊÓ¦DPIËõ·Å
+                // è®¾ç½®WebView2çš„ç¼©æ”¾å› å­ä»¥é€‚åº”DPIç¼©æ”¾
                 if (Math.Abs(dpiScale - 1.0f) > 0.01f)
                 {
-                    // ½öµ±ÏµÍ³DPIËõ·Å²»ÊÇ1.0Ê±²Åµ÷ÕûZoomFactor
-                    webView2.CoreWebView2.Settings.IsZoomControlEnabled = false; // ½ûÓÃÓÃ»§Ëõ·Å¿ØÖÆ
+                    // ä»…å½“ç³»ç»ŸDPIç¼©æ”¾ä¸æ˜¯1.0æ—¶æ‰è°ƒæ•´ZoomFactor
+                    webView2.CoreWebView2.Settings.IsZoomControlEnabled = false; // ç¦ç”¨ç”¨æˆ·ç¼©æ”¾æ§åˆ¶
                     
-                    // µÈ´ıÒ»¶ÎÊ±¼äÈ·±£ÍøÒ³ÍêÈ«¼ÓÔØ
+                    // ç­‰å¾…ä¸€æ®µæ—¶é—´ç¡®ä¿ç½‘é¡µå®Œå…¨åŠ è½½
                     await Task.Delay(500);
                     
-                    // ÉèÖÃËõ·Å±ÈÀıÓëÏµÍ³DPIÏàÆ¥Åä
+                    // è®¾ç½®ç¼©æ”¾æ¯”ä¾‹ä¸ç³»ç»ŸDPIç›¸åŒ¹é…
                     webView2.ZoomFactor = 1.0 / dpiScale;
                     
-                    Console.WriteLine($"ÉèÖÃWebView2Ëõ·Å±ÈÀıÎª: {1.0 / dpiScale} (ÏµÍ³DPIËõ·Å: {dpiScale})");
+                    Console.WriteLine($"è®¾ç½®WebView2ç¼©æ”¾æ¯”ä¾‹ä¸º: {1.0 / dpiScale} (ç³»ç»ŸDPIç¼©æ”¾: {dpiScale})");
                 }
                 
-                // ¼ÓÔØÖ¸¶¨ÍøÒ³
+                // åŠ è½½æŒ‡å®šç½‘é¡µ
                 webView2.CoreWebView2.Navigate("https://gamer.qq.com/v2/game/96897?ichannel=pcgames0Fpcgames1");
                 
-                // Ìí¼Ó±íµ¥¹Ø±ÕÊ±µÄÇåÀí´úÂë
+                // æ·»åŠ è¡¨å•å…³é—­æ—¶çš„æ¸…ç†ä»£ç 
                 this.FormClosed += (s, e) => {
                     try {
-                        // ³¢ÊÔÇåÀíÓÃ»§Êı¾İÄ¿Â¼
+                        // å°è¯•æ¸…ç†ç”¨æˆ·æ•°æ®ç›®å½•
                         if (Directory.Exists(userDataFolder))
                         {
-                            // ¿ÉÑ¡: ÇåÀíÓÃ»§Êı¾İÄ¿Â¼£¨Èç¹ûĞèÒªÍêÈ«É¾³ıÊı¾İ£©
+                            // å¯é€‰: æ¸…ç†ç”¨æˆ·æ•°æ®ç›®å½•ï¼ˆå¦‚æœéœ€è¦å®Œå…¨åˆ é™¤æ•°æ®ï¼‰
                             // Directory.Delete(userDataFolder, true);
                         }
                     }
                     catch (Exception ex) {
-                        // ºöÂÔÇåÀí¹ı³ÌÖĞµÄ´íÎó
-                        Debug.WriteLine($"ÇåÀíÓÃ»§Êı¾İÄ¿Â¼Ê±³ö´í: {ex.Message}");
+                        // å¿½ç•¥æ¸…ç†è¿‡ç¨‹ä¸­çš„é”™è¯¯
+                        Debug.WriteLine($"æ¸…ç†ç”¨æˆ·æ•°æ®ç›®å½•æ—¶å‡ºé”™: {ex.Message}");
                     }
                 };
             }
             catch (Exception ex)
             {
-                MessageBox.Show("WebView2 ³õÊ¼»¯Ê§°Ü: " + ex.Message);
+                MessageBox.Show("WebView2 åˆå§‹åŒ–å¤±è´¥: " + ex.Message);
             }
         }
 
@@ -269,7 +269,7 @@ namespace ymzx
         {
             try
             {
-                // ÇåÀíµ±Ç°½ø³ÌµÄÉèÖÃÎÄ¼ş
+                // æ¸…ç†å½“å‰è¿›ç¨‹çš„è®¾ç½®æ–‡ä»¶
                 string settingsPath = Path.Combine(
                     Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
                     "YmzxHelper",
@@ -281,7 +281,7 @@ namespace ymzx
                     File.Delete(settingsPath);
                 }
 
-                // ÇåÀíÓÃ»§Êı¾İÄ¿Â¼
+                // æ¸…ç†ç”¨æˆ·æ•°æ®ç›®å½•
                 if (Directory.Exists(userDataFolder))
                 {
                     try
@@ -290,13 +290,13 @@ namespace ymzx
                     }
                     catch (Exception ex)
                     {
-                        Debug.WriteLine($"ÇåÀíÓÃ»§Êı¾İÄ¿Â¼Ê±³ö´í: {ex.Message}");
+                        Debug.WriteLine($"æ¸…ç†ç”¨æˆ·æ•°æ®ç›®å½•æ—¶å‡ºé”™: {ex.Message}");
                     }
                 }
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"ÇåÀíÉèÖÃÎÄ¼şÊ±³ö´í: {ex.Message}");
+                Debug.WriteLine($"æ¸…ç†è®¾ç½®æ–‡ä»¶æ—¶å‡ºé”™: {ex.Message}");
             }
         }
     }
