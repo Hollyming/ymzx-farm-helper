@@ -487,7 +487,7 @@ namespace ymzx
         }
 
         // 农场操作脚本 - 增加点击次数参数
-        private static async Task FarmOperation(WebView2 webView, CancellationToken token, int clickTimes = 8)
+        private static async Task FarmOperation(WebView2 webView, CancellationToken token, int clickTimes = 9)
         {
             // 定期检查是否请求取消操作
             if (token.IsCancellationRequested) return;
@@ -1605,7 +1605,7 @@ namespace ymzx
         // "必读"按钮点击事件：显示标准 MessageBox 弹窗，文本不可复制
         public static void BtnMustRead_Click(object? sender, EventArgs e)
         {
-            string message = "必读事项：\r\n1.若无按键映射，请点击右侧一键重置或重进游戏；\r\n2.请调整最低画质，关闭画质增强，关闭声音；(减少GPU消耗）\r\n3.更多-设置-游戏-镜头辅助关闭（务必）；\r\n4.月卡循环流程：R复位，A走向无人机，Q启动无人机，R消除钓鱼和对话弹窗，2分一周期；；\r\n5. 无月卡流程：农场+牧场+农场+牧场+加工坊+休息，2分一周期";
+            string message = "必读事项：\r\n1.若无按键映射，请点击右侧一键重置或重进游戏；\r\n2.请调整最低画质，关闭画质增强，关闭声音；(减少GPU消耗）\r\n3.更多-设置-游戏-镜头辅助关闭（务必）；\r\n4.月卡循环流程：R复位，A走向无人机，Q启动无人机，R消除钓鱼和对话弹窗，2分一周期；；\r\n5. 无月卡流程：农牧*自选次数+加工坊+鱼塘+休息2分为一周期";
             MessageBox.Show(message, "必读", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
 
