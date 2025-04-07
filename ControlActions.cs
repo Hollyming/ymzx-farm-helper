@@ -39,6 +39,7 @@ namespace ymzx
         private static readonly Point RefreshButtonPoint = new Point(913, 487);//刷新键
         private static readonly Point UniversalButtonPoint = new Point(841, 433);//万能键
         private static readonly Point JumpButtonPoint = new Point(711, 447);//跳跃键
+        private static readonly Point RejectFriendPullPoint = new Point(400, 343);//拒绝好友拉取键   
         
         // 用于控制定时任务的取消标记
         private static CancellationTokenSource? scheduledTaskCts = null;
@@ -110,7 +111,8 @@ namespace ymzx
                                 settingsForm.FarmRanchTimes,
                                 settingsForm.ExecuteWorkshop,
                                 settingsForm.ExecuteFishing,
-                                settingsForm.FishingCount
+                                settingsForm.FishingCount,
+                                settingsForm.RestTimeSeconds
                             );
                         }
                         else
@@ -387,7 +389,8 @@ namespace ymzx
                                     settings.FarmRanchTimes,
                                     settings.ExecuteWorkshop,
                                     settings.ExecuteFishing,
-                                    settings.FishingCount
+                                    settings.FishingCount,
+                                    settings.RestTimeSeconds
                                 );
                             }
                             else
@@ -794,20 +797,22 @@ namespace ymzx
             await Task.Delay(500, token);
         }
 
-        // 休息操作脚本（每30秒点击一次屏幕中心）
-        private static async Task RestOperation(WebView2 webView, CancellationToken token)
+        // 休息操作脚本（每10秒点击一次拒绝好友拉取按钮）
+        private static async Task RestOperation(WebView2 webView, CancellationToken token, int restTimeSeconds)
         {
-            // 休息2分30秒，每30秒点击一次屏幕中心
-            for (int i = 0; i < 5; i++)
+            if (restTimeSeconds <= 0) return; // 如果不休息，直接返回
+            
+            int clickCount = restTimeSeconds / 10; // 计算需要点击的次数
+            for (int i = 0; i < clickCount; i++)
             {
                 if (token.IsCancellationRequested) break;
-                await ActivateWebPage(webView);
-                await Task.Delay(30000, token);
+                await ClickPoint(webView, RejectFriendPullPoint);
+                await Task.Delay(10000, token); // 每10秒点击一次
             }
         }
 
         // 手动操作循环脚本
-        private static async Task RunManualLoop(WebView2 webView, CancellationToken token, int farmRanchTimes = 2, bool executeWorkshop = true, bool executeFishing = false, int fishingCount = 24)
+        private static async Task RunManualLoop(WebView2 webView, CancellationToken token, int farmRanchTimes = 2, bool executeWorkshop = true, bool executeFishing = false, int fishingCount = 24, int restTimeSeconds = 0)
         {
             try
             {
@@ -842,7 +847,7 @@ namespace ymzx
                     if (token.IsCancellationRequested) break;
 
                     // 休息操作
-                    await RestOperation(webView, token);
+                    await RestOperation(webView, token, restTimeSeconds);
                     if (token.IsCancellationRequested) break;
                 }
             }

@@ -14,11 +14,14 @@ namespace ymzx
         private Button btnOK;
         private Button btnCancel;
         private readonly string settingsFilePath;
+        private ComboBox comboBoxRestTime;
+        private Label labelRestTime;
 
         public int FarmRanchTimes { get; private set; } = 2;
         public bool ExecuteWorkshop { get; private set; } = true;
         public bool ExecuteFishing { get; private set; } = false;
         public int FishingCount { get; private set; } = 24;
+        public int RestTimeSeconds { get; private set; } = 0;
 
         public ManualLoopSettingsForm(int processId)
         {
@@ -35,7 +38,7 @@ namespace ymzx
         private void InitializeComponents()
         {
             this.Text = "手动循环设置";
-            this.Size = new System.Drawing.Size(300, 250);
+            this.Size = new System.Drawing.Size(300, 300);
             this.FormBorderStyle = FormBorderStyle.FixedDialog;
             this.StartPosition = FormStartPosition.CenterParent;
             this.MaximizeBox = false;
@@ -103,12 +106,32 @@ namespace ymzx
             };
             this.Controls.Add(numericUpDownFishingCount);
 
+            // 休息时长设置
+            labelRestTime = new Label
+            {
+                Text = "休息时长:",
+                Location = new System.Drawing.Point(20, 150),
+                Size = new System.Drawing.Size(100, 20),
+                AutoSize = true
+            };
+            this.Controls.Add(labelRestTime);
+
+            comboBoxRestTime = new ComboBox
+            {
+                Location = new System.Drawing.Point(120, 150),
+                Size = new System.Drawing.Size(100, 20),
+                DropDownStyle = ComboBoxStyle.DropDownList
+            };
+            comboBoxRestTime.Items.AddRange(new object[] { "不休息", "30秒", "1分钟", "2分钟" });
+            comboBoxRestTime.SelectedIndex = 0;
+            this.Controls.Add(comboBoxRestTime);
+
             // 确定按钮
             btnOK = new Button
             {
                 Text = "确定",
                 DialogResult = DialogResult.OK,
-                Location = new System.Drawing.Point(100, 160),
+                Location = new System.Drawing.Point(60, 200),
                 Size = new System.Drawing.Size(80, 30)
             };
             btnOK.Click += BtnOK_Click;
@@ -119,7 +142,7 @@ namespace ymzx
             {
                 Text = "取消",
                 DialogResult = DialogResult.Cancel,
-                Location = new System.Drawing.Point(200, 160),
+                Location = new System.Drawing.Point(160, 200),
                 Size = new System.Drawing.Size(80, 30)
             };
             this.Controls.Add(btnCancel);
@@ -141,6 +164,14 @@ namespace ymzx
                         checkBoxFishing.Checked = settings.ExecuteFishing;
                         numericUpDownFishingCount.Value = settings.FishingCount;
                         numericUpDownFishingCount.Enabled = settings.ExecuteFishing;
+                        comboBoxRestTime.SelectedIndex = settings.RestTimeSeconds switch
+                        {
+                            0 => 0,    // 不休息
+                            30 => 1,   // 30秒
+                            60 => 2,   // 1分钟
+                            120 => 3,  // 2分钟
+                            _ => 0     // 默认不休息
+                        };
                     }
                 }
             }
@@ -159,7 +190,15 @@ namespace ymzx
                     FarmRanchTimes = int.Parse(comboBoxFarmRanchTimes.SelectedItem.ToString()),
                     ExecuteWorkshop = checkBoxWorkshop.Checked,
                     ExecuteFishing = checkBoxFishing.Checked,
-                    FishingCount = (int)numericUpDownFishingCount.Value
+                    FishingCount = (int)numericUpDownFishingCount.Value,
+                    RestTimeSeconds = comboBoxRestTime.SelectedIndex switch
+                    {
+                        0 => 0,    // 不休息
+                        1 => 30,   // 30秒
+                        2 => 60,   // 1分钟
+                        3 => 120,  // 2分钟
+                        _ => 0     // 默认不休息
+                    }
                 };
 
                 string directory = Path.GetDirectoryName(settingsFilePath);
@@ -188,8 +227,18 @@ namespace ymzx
             ExecuteWorkshop = checkBoxWorkshop.Checked;
             ExecuteFishing = checkBoxFishing.Checked;
             FishingCount = (int)numericUpDownFishingCount.Value;
+            RestTimeSeconds = comboBoxRestTime.SelectedIndex switch
+            {
+                0 => 0,    // 不休息
+                1 => 30,   // 30秒
+                2 => 60,   // 1分钟
+                3 => 120,  // 2分钟
+                _ => 0     // 默认不休息
+            };
             
             SaveSettings();
+            this.DialogResult = DialogResult.OK;
+            this.Close();
         }
 
         // 添加设置类
@@ -199,6 +248,7 @@ namespace ymzx
             public bool ExecuteWorkshop { get; set; }
             public bool ExecuteFishing { get; set; }
             public int FishingCount { get; set; }
+            public int RestTimeSeconds { get; set; }
         }
     }
 } 

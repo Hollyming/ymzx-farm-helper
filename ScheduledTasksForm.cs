@@ -38,7 +38,7 @@ namespace ymzx
         private void InitializeComponent()
         {
             this.Text = "定时任务设置";
-            this.Size = new System.Drawing.Size(450, 400); // 调整整体窗口大小
+            this.Size = new System.Drawing.Size(350, 400); // 调整整体窗口宽度
             this.FormBorderStyle = FormBorderStyle.FixedDialog;
             this.MaximizeBox = false;
             this.MinimizeBox = false;
@@ -48,7 +48,7 @@ namespace ymzx
             checkBoxFishTank = new CheckBox();
             checkBoxFishTank.Text = "启用鱼缸收获";
             checkBoxFishTank.Location = new System.Drawing.Point(20, 20);
-            checkBoxFishTank.Size = new System.Drawing.Size(200, 20);
+            checkBoxFishTank.Size = new System.Drawing.Size(150, 20);
             checkBoxFishTank.CheckedChanged += CheckBoxFishTank_CheckedChanged;
 
             // 小时标签
@@ -80,8 +80,8 @@ namespace ymzx
             // 钓鱼任务复选框
             checkBoxFishing = new CheckBox();
             checkBoxFishing.Text = "启用定时偷鱼";
-            checkBoxFishing.Location = new System.Drawing.Point(20, 100); // 增加垂直间距
-            checkBoxFishing.Size = new System.Drawing.Size(200, 20);
+            checkBoxFishing.Location = new System.Drawing.Point(20, 100);
+            checkBoxFishing.Size = new System.Drawing.Size(150, 20);
             checkBoxFishing.CheckedChanged += CheckBoxFishing_CheckedChanged;
 
             // 钓鱼小时标签
@@ -119,13 +119,13 @@ namespace ymzx
             // 钓鱼玩家输入框
             textBoxFishingPlayer = new TextBox();
             textBoxFishingPlayer.Location = new System.Drawing.Point(120, 160);
-            textBoxFishingPlayer.Size = new System.Drawing.Size(200, 20);
+            textBoxFishingPlayer.Size = new System.Drawing.Size(150, 20);
             
             // 泡温泉任务复选框
             checkBoxHotSpring = new CheckBox();
             checkBoxHotSpring.Text = "启用泡温泉";
-            checkBoxHotSpring.Location = new System.Drawing.Point(20, 190); // 调整位置，减小与钓鱼控件的间距
-            checkBoxHotSpring.Size = new System.Drawing.Size(200, 20);
+            checkBoxHotSpring.Location = new System.Drawing.Point(20, 190);
+            checkBoxHotSpring.Size = new System.Drawing.Size(150, 20);
             checkBoxHotSpring.CheckedChanged += CheckBoxHotSpring_CheckedChanged;
 
             // 泡温泉小时标签
@@ -163,12 +163,12 @@ namespace ymzx
             // 泡温泉玩家输入框
             textBoxHotSpringPlayer = new TextBox();
             textBoxHotSpringPlayer.Location = new System.Drawing.Point(120, 250);
-            textBoxHotSpringPlayer.Size = new System.Drawing.Size(200, 20);
+            textBoxHotSpringPlayer.Size = new System.Drawing.Size(150, 20);
 
             // 确认按钮
             btnConfirm = new Button();
             btnConfirm.Text = "确认";
-            btnConfirm.Location = new System.Drawing.Point(180, 300); // 调整位置以适应新的布局
+            btnConfirm.Location = new System.Drawing.Point(140, 300);
             btnConfirm.Size = new System.Drawing.Size(75, 23);
             btnConfirm.Click += BtnConfirm_Click;
 
