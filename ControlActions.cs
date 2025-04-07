@@ -182,7 +182,7 @@ namespace ymzx
         private static readonly List<TaskSchedule> scheduledTasks = new List<TaskSchedule>
         {
             new TaskSchedule("FishTank", async (webView, token) => await FishTankOperation(webView, token), 5, 0, false),//鱼缸收获，默认时间5点，默认不启用
-            new TaskSchedule("Fishing", async (webView, token) => await FishingOperation(webView, token), 12, 0, false),//钓鱼，默认时间12点，默认不启用
+            new TaskSchedule("Fishing", async (webView, token) => await StealFishingOperation(webView, token), 12, 0, false, ""),//偷鱼，默认时间12点，默认不启用
             new TaskSchedule("HotSpring", async (webView, token) => await HotSpringOperation(webView, token), 20, 0, false, ""),//泡温泉，默认时间20点，默认不启用
             // 在这里添加更多定时任务
             // new TaskSchedule("OtherTask", OtherTaskOperation, 12, 0),
@@ -898,7 +898,7 @@ namespace ymzx
         }
 
         // 钓鱼操作脚本
-        private static async Task FishingOperation(WebView2 webView, CancellationToken token, int fishingCount = 24)
+        private static async Task FishingOperation(WebView2 webView, CancellationToken token, int fishingCount = 5)
         {
             // 定期检查是否请求取消操作
             if (token.IsCancellationRequested) return;
@@ -949,6 +949,63 @@ namespace ymzx
             // 钓鱼结束，按刷新键
             await ClickPoint(webView, RefreshButtonPoint);
             await Task.Delay(5000, token);
+        }
+
+        // 偷鱼操作脚本
+        private static async Task StealFishingOperation(WebView2 webView, CancellationToken token)
+        {
+            // 获取偷鱼玩家的UID/昵称
+            var fishingTask = scheduledTasks.FirstOrDefault(t => t.TaskName == "Fishing");
+            if (fishingTask == null || string.IsNullOrEmpty(fishingTask.ExtraParam))
+            {
+                Console.WriteLine("偷鱼任务缺少玩家UID/昵称参数");
+                return;
+            }
+            
+            string playerUidOrName = fishingTask.ExtraParam;
+            
+            // 点击刷新
+            await ClickPoint(webView, RefreshButtonPoint);
+            await Task.Delay(200, token);
+            
+            // 点击社交按钮 (924,162)
+            await ClickPoint(webView, new Point(924, 162));
+            await Task.Delay(200, token);
+            
+            // 点击下面输入昵称或uid (625,516)
+            await ClickPoint(webView, new Point(625, 516));
+            await Task.Delay(200, token);
+            
+            // 输入要去的玩家uid或昵称
+            await InputText(webView, playerUidOrName);
+            // 在按Enter之前增加足够的延迟确保输入框获得焦点并且内容已填入
+            await Task.Delay(1000, token);
+            
+            // 模拟按下enter键一次
+            await DirectPressEnter(webView);
+            // 等待搜索结果显示
+            await Task.Delay(2000, token);
+            
+            // 点击拜访该玩家农场 (915,166)
+            await ClickPoint(webView, new Point(915, 166));
+            await Task.Delay(300, token);
+            await ClickPoint(webView, new Point(581, 346));//如果当前无人机正在运行，会有提示窗口，这个点击能去掉该窗口
+            await Task.Delay(8000, token);
+            
+            // 点击刷新按钮
+            await ClickPoint(webView, RefreshButtonPoint);
+            await Task.Delay(1000, token);
+            
+            // 执行钓鱼操作，默认5次
+            await FishingOperation(webView, token, 5);
+            
+            // 点击回家 (868,32)
+            await ClickPoint(webView, new Point(868, 32));
+            await Task.Delay(6000, token);
+            
+            // 点击刷新
+            await ClickPoint(webView, RefreshButtonPoint);
+            await Task.Delay(600, token);
         }
 
         // 泡温泉喝茶脚本

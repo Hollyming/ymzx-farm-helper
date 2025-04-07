@@ -18,6 +18,8 @@ namespace ymzx
         private NumericUpDown numericUpDownFishingMinute;
         private Label labelFishingHour;
         private Label labelFishingMinute;
+        private Label labelFishingPlayer;
+        private TextBox textBoxFishingPlayer;
         
         private CheckBox checkBoxHotSpring;
         private NumericUpDown numericUpDownHotSpringHour;
@@ -36,7 +38,7 @@ namespace ymzx
         private void InitializeComponent()
         {
             this.Text = "定时任务设置";
-            this.Size = new System.Drawing.Size(400, 350); // 增大窗口尺寸
+            this.Size = new System.Drawing.Size(450, 400); // 调整整体窗口大小
             this.FormBorderStyle = FormBorderStyle.FixedDialog;
             this.MaximizeBox = false;
             this.MinimizeBox = false;
@@ -77,20 +79,20 @@ namespace ymzx
             
             // 钓鱼任务复选框
             checkBoxFishing = new CheckBox();
-            checkBoxFishing.Text = "启用定时钓鱼";
-            checkBoxFishing.Location = new System.Drawing.Point(20, 90);
+            checkBoxFishing.Text = "启用定时偷鱼";
+            checkBoxFishing.Location = new System.Drawing.Point(20, 100); // 增加垂直间距
             checkBoxFishing.Size = new System.Drawing.Size(200, 20);
             checkBoxFishing.CheckedChanged += CheckBoxFishing_CheckedChanged;
 
             // 钓鱼小时标签
             labelFishingHour = new Label();
             labelFishingHour.Text = "时";
-            labelFishingHour.Location = new System.Drawing.Point(20, 120);
+            labelFishingHour.Location = new System.Drawing.Point(20, 130);
             labelFishingHour.Size = new System.Drawing.Size(30, 20);
 
             // 钓鱼小时输入框
             numericUpDownFishingHour = new NumericUpDown();
-            numericUpDownFishingHour.Location = new System.Drawing.Point(50, 120);
+            numericUpDownFishingHour.Location = new System.Drawing.Point(50, 130);
             numericUpDownFishingHour.Size = new System.Drawing.Size(50, 20);
             numericUpDownFishingHour.Minimum = 0;
             numericUpDownFishingHour.Maximum = 23;
@@ -98,32 +100,43 @@ namespace ymzx
             // 钓鱼分钟标签
             labelFishingMinute = new Label();
             labelFishingMinute.Text = "分";
-            labelFishingMinute.Location = new System.Drawing.Point(120, 120);
+            labelFishingMinute.Location = new System.Drawing.Point(120, 130);
             labelFishingMinute.Size = new System.Drawing.Size(30, 20);
 
             // 钓鱼分钟输入框
             numericUpDownFishingMinute = new NumericUpDown();
-            numericUpDownFishingMinute.Location = new System.Drawing.Point(150, 120);
+            numericUpDownFishingMinute.Location = new System.Drawing.Point(150, 130);
             numericUpDownFishingMinute.Size = new System.Drawing.Size(50, 20);
             numericUpDownFishingMinute.Minimum = 0;
             numericUpDownFishingMinute.Maximum = 59;
             
+            // 钓鱼玩家标签
+            labelFishingPlayer = new Label();
+            labelFishingPlayer.Text = "玩家UID/昵称:";
+            labelFishingPlayer.Location = new System.Drawing.Point(20, 160);
+            labelFishingPlayer.Size = new System.Drawing.Size(100, 20);
+            
+            // 钓鱼玩家输入框
+            textBoxFishingPlayer = new TextBox();
+            textBoxFishingPlayer.Location = new System.Drawing.Point(120, 160);
+            textBoxFishingPlayer.Size = new System.Drawing.Size(200, 20);
+            
             // 泡温泉任务复选框
             checkBoxHotSpring = new CheckBox();
             checkBoxHotSpring.Text = "启用泡温泉";
-            checkBoxHotSpring.Location = new System.Drawing.Point(20, 160);
+            checkBoxHotSpring.Location = new System.Drawing.Point(20, 190); // 调整位置，减小与钓鱼控件的间距
             checkBoxHotSpring.Size = new System.Drawing.Size(200, 20);
             checkBoxHotSpring.CheckedChanged += CheckBoxHotSpring_CheckedChanged;
 
             // 泡温泉小时标签
             labelHotSpringHour = new Label();
             labelHotSpringHour.Text = "时";
-            labelHotSpringHour.Location = new System.Drawing.Point(20, 190);
+            labelHotSpringHour.Location = new System.Drawing.Point(20, 220);
             labelHotSpringHour.Size = new System.Drawing.Size(30, 20);
 
             // 泡温泉小时输入框
             numericUpDownHotSpringHour = new NumericUpDown();
-            numericUpDownHotSpringHour.Location = new System.Drawing.Point(50, 190);
+            numericUpDownHotSpringHour.Location = new System.Drawing.Point(50, 220);
             numericUpDownHotSpringHour.Size = new System.Drawing.Size(50, 20);
             numericUpDownHotSpringHour.Minimum = 0;
             numericUpDownHotSpringHour.Maximum = 23;
@@ -131,12 +144,12 @@ namespace ymzx
             // 泡温泉分钟标签
             labelHotSpringMinute = new Label();
             labelHotSpringMinute.Text = "分";
-            labelHotSpringMinute.Location = new System.Drawing.Point(120, 190);
+            labelHotSpringMinute.Location = new System.Drawing.Point(120, 220);
             labelHotSpringMinute.Size = new System.Drawing.Size(30, 20);
 
             // 泡温泉分钟输入框
             numericUpDownHotSpringMinute = new NumericUpDown();
-            numericUpDownHotSpringMinute.Location = new System.Drawing.Point(150, 190);
+            numericUpDownHotSpringMinute.Location = new System.Drawing.Point(150, 220);
             numericUpDownHotSpringMinute.Size = new System.Drawing.Size(50, 20);
             numericUpDownHotSpringMinute.Minimum = 0;
             numericUpDownHotSpringMinute.Maximum = 59;
@@ -144,18 +157,18 @@ namespace ymzx
             // 泡温泉玩家标签
             labelHotSpringPlayer = new Label();
             labelHotSpringPlayer.Text = "玩家UID/昵称:";
-            labelHotSpringPlayer.Location = new System.Drawing.Point(20, 220);
+            labelHotSpringPlayer.Location = new System.Drawing.Point(20, 250);
             labelHotSpringPlayer.Size = new System.Drawing.Size(100, 20);
             
             // 泡温泉玩家输入框
             textBoxHotSpringPlayer = new TextBox();
-            textBoxHotSpringPlayer.Location = new System.Drawing.Point(120, 220);
+            textBoxHotSpringPlayer.Location = new System.Drawing.Point(120, 250);
             textBoxHotSpringPlayer.Size = new System.Drawing.Size(200, 20);
 
             // 确认按钮
             btnConfirm = new Button();
             btnConfirm.Text = "确认";
-            btnConfirm.Location = new System.Drawing.Point(150, 270);
+            btnConfirm.Location = new System.Drawing.Point(180, 300); // 调整位置以适应新的布局
             btnConfirm.Size = new System.Drawing.Size(75, 23);
             btnConfirm.Click += BtnConfirm_Click;
 
@@ -171,6 +184,8 @@ namespace ymzx
                 numericUpDownFishingHour,
                 labelFishingMinute,
                 numericUpDownFishingMinute,
+                labelFishingPlayer,
+                textBoxFishingPlayer,
                 checkBoxHotSpring,
                 labelHotSpringHour,
                 numericUpDownHotSpringHour,
@@ -198,6 +213,7 @@ namespace ymzx
                 checkBoxFishing.Checked = fishingTask.IsEnabled;
                 numericUpDownFishingHour.Value = fishingTask.ExecutionHour;
                 numericUpDownFishingMinute.Value = fishingTask.ExecutionMinute;
+                textBoxFishingPlayer.Text = fishingTask.ExtraParam;
             }
             
             var hotSpringTask = ControlActions.GetScheduledTask("HotSpring");
@@ -236,12 +252,14 @@ namespace ymzx
             labelHour.Enabled = fishTankEnabled;
             labelMinute.Enabled = fishTankEnabled;
             
-            // 钓鱼控件状态
+            // 偷鱼控件状态
             bool fishingEnabled = checkBoxFishing.Checked;
             numericUpDownFishingHour.Enabled = fishingEnabled;
             numericUpDownFishingMinute.Enabled = fishingEnabled;
             labelFishingHour.Enabled = fishingEnabled;
             labelFishingMinute.Enabled = fishingEnabled;
+            labelFishingPlayer.Enabled = fishingEnabled;
+            textBoxFishingPlayer.Enabled = fishingEnabled;
             
             // 泡温泉控件状态
             bool hotSpringEnabled = checkBoxHotSpring.Checked;
@@ -278,11 +296,13 @@ namespace ymzx
             {
                 bool statusChanged = fishingTask.IsEnabled != checkBoxFishing.Checked || 
                                      fishingTask.ExecutionHour != (int)numericUpDownFishingHour.Value ||
-                                     fishingTask.ExecutionMinute != (int)numericUpDownFishingMinute.Value;
+                                     fishingTask.ExecutionMinute != (int)numericUpDownFishingMinute.Value ||
+                                     fishingTask.ExtraParam != textBoxFishingPlayer.Text;
                 
                 fishingTask.IsEnabled = checkBoxFishing.Checked;
                 fishingTask.ExecutionHour = (int)numericUpDownFishingHour.Value;
                 fishingTask.ExecutionMinute = (int)numericUpDownFishingMinute.Value;
+                fishingTask.ExtraParam = textBoxFishingPlayer.Text;
                 
                 // 如果设置有变化，重置执行状态
                 if (statusChanged && fishingTask.IsEnabled)

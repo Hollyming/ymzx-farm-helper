@@ -32,7 +32,7 @@ namespace ymzx
             InitializeComponent();
             ControlActions.SetMainForm(this);  // 设置主窗体引用
             // 设置主窗体属性
-            this.Text = "ymzxhelper 3.0";
+            this.Text = "ymzxhelper 3.5";
             this.FormBorderStyle = FormBorderStyle.FixedSingle;
             this.MaximizeBox = false;
             this.ClientSize = new Size(960, 580);
