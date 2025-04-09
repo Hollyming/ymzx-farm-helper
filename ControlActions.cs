@@ -914,8 +914,8 @@ namespace ymzx
 
             if (token.IsCancellationRequested) return;
             
-            // 按W键6.6秒
-            await HoldKey(webView, "W", 6600);
+            // 按W键6.8秒（这一步是考虑碰撞标准稻草人的时间）
+            await HoldKey(webView, "W", 6800);
             await Task.Delay(1000, token);
 
             // 重复钓鱼指定次数
@@ -1663,14 +1663,113 @@ namespace ymzx
             stealOptionsForm.ShowDialog();
         }
 
-        // "必读"按钮点击事件，点击后弹窗显示预设的文字
-        // "必读"按钮点击事件：显示标准 MessageBox 弹窗，文本不可复制
+        // "必读"按钮点击事件
         public static void BtnMustRead_Click(object? sender, EventArgs e)
         {
             string message = "必读事项：\r\n1.若无按键映射，请点击右侧一键重置或重进游戏；\r\n2.请调整最低画质，关闭画质增强，关闭声音；(减少GPU消耗）\r\n3.更多-设置-游戏-镜头辅助关闭（务必）；\r\n4.月卡循环流程：R复位，A走向无人机，Q启动无人机，R消除钓鱼和对话弹窗，2分一周期；；\r\n5. 无月卡流程：农牧*自选次数+加工坊+鱼塘+休息2分为一周期";
             MessageBox.Show(message, "必读", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
 
+        // "一键设置"按钮点击事件
+        public static async void BtnOneClickSettings_Click(object? sender, EventArgs e)
+        {
+            if (mainForm == null || mainForm.webView2 == null || mainForm.webView2.CoreWebView2 == null)
+            {
+                MessageBox.Show("WebView2控件未初始化完成，请等待页面加载完毕再试", "错误", 
+                               MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+
+            // 创建一个包含两个选项的弹窗
+            Form settingsOptionsForm = new Form()
+            {
+                Text = "一键设置选项",
+                Size = new Size(200, 150),
+                FormBorderStyle = FormBorderStyle.FixedDialog,
+                StartPosition = FormStartPosition.CenterParent,
+                MaximizeBox = false,
+                MinimizeBox = false
+            };
+
+            // 添加"登录界面"按钮
+            Button btnLoginSettings = new Button()
+            {
+                Text = "登录界面",
+                Size = new Size(160, 30),
+                Location = new Point(15, 10),
+                FlatStyle = FlatStyle.Flat
+            };
+            btnLoginSettings.FlatAppearance.BorderSize = 0;
+            btnLoginSettings.FlatAppearance.MouseOverBackColor = Color.LightBlue;
+            btnLoginSettings.Click += async (s, args) => {
+                settingsOptionsForm.Close();
+                try
+                {
+                    using var cts = new CancellationTokenSource();
+                    await ApplyGameSettings(mainForm.webView2, cts.Token);
+                    MessageBox.Show("登录界面设置完成！", "提示", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"登录界面设置失败: {ex.Message}", "错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+            };
+            settingsOptionsForm.Controls.Add(btnLoginSettings);
+
+            // 添加"农场界面"按钮
+            Button btnFarmSettings = new Button()
+            {
+                Text = "农场界面",
+                Size = new Size(160, 30),
+                Location = new Point(15, 50),
+                FlatStyle = FlatStyle.Flat
+            };
+            btnFarmSettings.FlatAppearance.BorderSize = 0;
+            btnFarmSettings.FlatAppearance.MouseOverBackColor = Color.LightBlue;
+            btnFarmSettings.Click += async (s, args) => {
+                settingsOptionsForm.Close();
+                try
+                {
+                    using var cts = new CancellationTokenSource();
+                    
+                    // 点击更多按钮
+                    await ClickPoint(mainForm.webView2, new Point(580, 506));
+                    await Task.Delay(500, cts.Token);
+                    
+                    // 点击设置
+                    await ClickPoint(mainForm.webView2, new Point(550, 393));
+                    await Task.Delay(500, cts.Token);
+                    
+                    // 点击帧率选择标准
+                    await ClickPoint(mainForm.webView2, new Point(425, 300));
+                    await Task.Delay(500, cts.Token);
+                    
+                    // 点击分辨率选择低
+                    await ClickPoint(mainForm.webView2, new Point(425, 360));
+                    await Task.Delay(500, cts.Token);
+                    
+                    // 点击游戏
+                    await ClickPoint(mainForm.webView2, new Point(75, 220));
+                    await Task.Delay(500, cts.Token);
+                    
+                    // 关闭镜头辅助
+                    await ClickPoint(mainForm.webView2, new Point(398, 229));
+                    await Task.Delay(500, cts.Token);
+                    
+                    // 点击返回
+                    await ClickPoint(mainForm.webView2, new Point(36, 44));
+                    
+                    MessageBox.Show("农场界面设置完成！", "提示", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"农场界面设置失败: {ex.Message}", "错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+            };
+            settingsOptionsForm.Controls.Add(btnFarmSettings);
+
+            settingsOptionsForm.ShowDialog();
+        }
         
 
         // "定时任务"按钮点击事件：打开定时任务设置窗口
@@ -1681,5 +1780,52 @@ namespace ymzx
                 form.ShowDialog();
             }
         }
+
+
+        //关闭画质增强，设置标清，关闭音量操作
+        public static async Task ApplyGameSettings(WebView2 webView, CancellationToken token)
+        {
+            try
+            {
+                // 确保WebView2已初始化
+                if (webView == null || webView.CoreWebView2 == null)
+                {
+                    Console.WriteLine("WebView2 is not initialized");
+                    return;
+                }
+
+                // 1. 设置标清模式
+                string setLowQualityJs = @"
+                    document.querySelector('#cloudGameMenu > div > div.system-menu-top > div:nth-child(2) > div > div > ul:nth-child(2) > li:nth-child(2)').click();
+                ";
+                
+                // 2. 关闭音量
+                string muteVolumeJs = @"
+                    document.querySelector('#cloudGameMenu > div > div.system-menu-top > div.status-set-div.menu-voice-status > span').click();
+                ";
+                
+                // 3. 关闭画质增强
+                string disableQualityEnhancementJs = @"
+                    document.querySelector('#cloudGameMenu > div > div.system-menu-top > div:nth-child(2) > div > div > ul:nth-child(4) > li:nth-child(2)').click();
+                ";
+
+                // 执行JavaScript代码
+                await webView.ExecuteScriptAsync(setLowQualityJs);
+                await Task.Delay(500, token); // 短暂延迟确保操作完成
+                
+                await webView.ExecuteScriptAsync(muteVolumeJs);
+                await Task.Delay(500, token);
+                
+                await webView.ExecuteScriptAsync(disableQualityEnhancementJs);
+                await Task.Delay(500, token);
+                
+                Console.WriteLine("Game settings applied successfully");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error applying game settings: {ex.Message}");
+            }
+        }
+
     }
 }

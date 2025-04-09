@@ -32,7 +32,7 @@ namespace ymzx
             InitializeComponent();
             ControlActions.SetMainForm(this);  // 设置主窗体引用
             // 设置主窗体属性
-            this.Text = "ymzxhelper 3.6";
+            this.Text = "ymzxhelper 3.7";
             this.FormBorderStyle = FormBorderStyle.FixedSingle;
             this.MaximizeBox = false;
             this.ClientSize = new Size(960, 580);
@@ -112,24 +112,15 @@ namespace ymzx
             btnScheduledTasks.Click += new System.EventHandler(ControlActions.BtnScheduledTasks_Click);
             this.Controls.Add(btnScheduledTasks);
 
-            // "Github"按钮
+            // "Github"按钮改为"一键设置"按钮
             btnGithub = new Button();
-            btnGithub.Text = "Github";
+            btnGithub.Text = "一键设置";
             btnGithub.Size = new Size(buttonWidth, buttonHeight);
             btnGithub.Location = new Point(startX + (buttonWidth + spacing) * 5, startY);
             btnGithub.FlatStyle = FlatStyle.Flat;
             btnGithub.FlatAppearance.BorderSize = 0;
             btnGithub.FlatAppearance.MouseOverBackColor = Color.LightBlue;
-            btnGithub.Click += (sender, e) => {
-                try
-                {
-                    Process.Start(new ProcessStartInfo("https://github.com/Hollyming/ymzx-farm-helper") { UseShellExecute = true });
-                }
-                catch (Exception ex)
-                {
-                    MessageBox.Show("无法打开链接: " + ex.Message);
-                }
-            };
+            btnGithub.Click += ControlActions.BtnOneClickSettings_Click;
             this.Controls.Add(btnGithub);
 
             // "必读"按钮
@@ -241,7 +232,7 @@ namespace ymzx
                 }
                 
                 // 加载指定网页
-                webView2.CoreWebView2.Navigate("https://gamer.qq.com/v2/game/96897?ichannel=pcgames0Fpcgames1");
+                webView2.CoreWebView2.Navigate("https://gamer.qq.com/v2/game/96897");
                 
                 // 添加表单关闭时的清理代码
                 this.FormClosed += (s, e) => {
