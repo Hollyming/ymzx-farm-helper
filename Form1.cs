@@ -6,6 +6,10 @@ using Microsoft.Web.WebView2.WinForms;
 using Microsoft.Web.WebView2.Core;
 using System.Diagnostics;
 using System.IO;
+using System.Text.Json;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
 
 // 发布命令：dotnet publish -c Release -r win-x64 --self-contained false
 // 测试命令：dotnet run
@@ -20,19 +24,24 @@ namespace ymzx
         private Button btnFarmGuide;
         private Button btnScheduledTasks;
         private Button btnGithub;
+        private Button btnAccountManager; // 改为账号管理按钮
         private CheckBox checkBoxGPU;
         internal CheckBox checkBoxNoMonthlyCard;
         internal WebView2 webView2;
         
         // 记录当前实例的用户数据目录
-        private string userDataFolder;
+        internal string CurrentUserDataFolder { get; private set; }
+
+        // 保存账号相关属性
+        internal string AccountToSave { get; set; }
+        internal bool NeedSaveAccount { get; set; }
 
         public Form1()
         {
             InitializeComponent();
             ControlActions.SetMainForm(this);  // 设置主窗体引用
             // 设置主窗体属性
-            this.Text = "ymzxhelper 3.7";
+            this.Text = "ymzxhelper 3.9";
             this.FormBorderStyle = FormBorderStyle.FixedSingle;
             this.MaximizeBox = false;
             this.ClientSize = new Size(960, 580);
@@ -123,16 +132,16 @@ namespace ymzx
             btnGithub.Click += ControlActions.BtnOneClickSettings_Click;
             this.Controls.Add(btnGithub);
 
-            // "必读"按钮
-            Button btnMustRead = new Button();
-            btnMustRead.Text = "必读";
-            btnMustRead.Size = new Size(buttonWidth, buttonHeight);
-            btnMustRead.Location = new Point(startX + (buttonWidth + spacing) * 6, startY);
-            btnMustRead.FlatStyle = FlatStyle.Flat;
-            btnMustRead.FlatAppearance.BorderSize = 0;
-            btnMustRead.FlatAppearance.MouseOverBackColor = Color.LightBlue;
-            btnMustRead.Click += ControlActions.BtnMustRead_Click;
-            this.Controls.Add(btnMustRead);
+            // "账号管理"按钮
+            btnAccountManager = new Button();
+            btnAccountManager.Text = "账号管理";
+            btnAccountManager.Size = new Size(buttonWidth, buttonHeight);
+            btnAccountManager.Location = new Point(startX + (buttonWidth + spacing) * 6, startY);
+            btnAccountManager.FlatStyle = FlatStyle.Flat;
+            btnAccountManager.FlatAppearance.BorderSize = 0;
+            btnAccountManager.FlatAppearance.MouseOverBackColor = Color.LightBlue;
+            btnAccountManager.Click += BtnAccountManager_Click;
+            this.Controls.Add(btnAccountManager);
 
             // 最右边添加 GPU 启用选项和无月卡版本选项
             checkBoxGPU = new CheckBox();
@@ -160,8 +169,30 @@ namespace ymzx
             this.Controls.Add(webView2);
         }
 
+        private void BtnAccountManager_Click(object sender, EventArgs e)
+        {
+            using (var form = new AccountManagerForm(this))
+            {
+                form.ShowDialog();
+            }
+        }
+
         private async void Form1_Load(object sender, EventArgs e)
         {
+            // 创建临时用户数据目录
+            string baseFolder = Path.Combine(
+                AppDomain.CurrentDomain.BaseDirectory,
+                "WebView2Data"
+            );
+            
+            // 确保基础目录存在
+            Directory.CreateDirectory(baseFolder);
+            
+            // 创建基于进程ID和时间戳的唯一文件夹名
+            int processId = Process.GetCurrentProcess().Id;
+            string timestamp = DateTime.Now.ToString("yyyyMMddHHmmssfff");
+            CurrentUserDataFolder = Path.Combine(baseFolder, $"Instance_{processId}_{timestamp}");
+            
             await InitializeWebView2();
         }
 
@@ -170,26 +201,10 @@ namespace ymzx
         {
             try
             {
-                // 创建一个基于当前进程ID和时间戳的唯一用户数据文件夹
-                string baseFolder = Path.Combine(
-                    Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                    "YmzxHelper", "UserData");
-                
-                // 确保基础目录存在
-                if (!Directory.Exists(baseFolder))
-                {
-                    Directory.CreateDirectory(baseFolder);
-                }
-                
-                // 创建基于进程ID和时间戳的唯一文件夹名
-                int processId = Process.GetCurrentProcess().Id;
-                string timestamp = DateTime.Now.ToString("yyyyMMddHHmmssfff");
-                userDataFolder = Path.Combine(baseFolder, $"Instance_{processId}_{timestamp}");
-                
                 // 确保用户数据目录存在
-                if (!Directory.Exists(userDataFolder))
+                if (!Directory.Exists(CurrentUserDataFolder))
                 {
-                    Directory.CreateDirectory(userDataFolder);
+                    Directory.CreateDirectory(CurrentUserDataFolder);
                 }
                 
                 // 配置WebView2环境选项
@@ -200,13 +215,11 @@ namespace ymzx
                 }
                 else
                 {
-                    // options.AdditionalBrowserArguments = "--enable-gpu";
-                    /*使用高性能GPU*/
                     options.AdditionalBrowserArguments = "--use-angle=d3d11 --gpu-preference=high-performance";
                 }
                 
-                // 创建WebView2环境，指定唯一的用户数据目录
-                var env = await CoreWebView2Environment.CreateAsync(null, userDataFolder, options);
+                // 创建WebView2环境，指定用户数据目录
+                var env = await CoreWebView2Environment.CreateAsync(null, CurrentUserDataFolder, options);
                 await webView2.EnsureCoreWebView2Async(env);
                 
                 // 获取系统DPI缩放比例
@@ -219,36 +232,13 @@ namespace ymzx
                 // 设置WebView2的缩放因子以适应DPI缩放
                 if (Math.Abs(dpiScale - 1.0f) > 0.01f)
                 {
-                    // 仅当系统DPI缩放不是1.0时才调整ZoomFactor
-                    webView2.CoreWebView2.Settings.IsZoomControlEnabled = false; // 禁用用户缩放控制
-                    
-                    // 等待一段时间确保网页完全加载
+                    webView2.CoreWebView2.Settings.IsZoomControlEnabled = false;
                     await Task.Delay(500);
-                    
-                    // 设置缩放比例与系统DPI相匹配
                     webView2.ZoomFactor = 1.0 / dpiScale;
-                    
-                    Console.WriteLine($"设置WebView2缩放比例为: {1.0 / dpiScale} (系统DPI缩放: {dpiScale})");
                 }
                 
                 // 加载指定网页
                 webView2.CoreWebView2.Navigate("https://gamer.qq.com/v2/game/96897");
-                
-                // 添加表单关闭时的清理代码
-                this.FormClosed += (s, e) => {
-                    try {
-                        // 尝试清理用户数据目录
-                        if (Directory.Exists(userDataFolder))
-                        {
-                            // 可选: 清理用户数据目录（如果需要完全删除数据）
-                            // Directory.Delete(userDataFolder, true);
-                        }
-                    }
-                    catch (Exception ex) {
-                        // 忽略清理过程中的错误
-                        Debug.WriteLine($"清理用户数据目录时出错: {ex.Message}");
-                    }
-                };
             }
             catch (Exception ex)
             {
@@ -260,34 +250,262 @@ namespace ymzx
         {
             try
             {
-                // 清理当前进程的设置文件
-                string settingsPath = Path.Combine(
-                    Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                    "YmzxHelper",
-                    $"manual_settings_{Process.GetCurrentProcess().Id}.json"
+                // 读取已保存的账号列表
+                string accountsConfigPath = Path.Combine(
+                    AppDomain.CurrentDomain.BaseDirectory,
+                    "Accounts",
+                    "accounts.json"
                 );
 
-                if (File.Exists(settingsPath))
+                var savedPaths = new HashSet<string>();
+                if (File.Exists(accountsConfigPath))
                 {
-                    File.Delete(settingsPath);
+                    string json = File.ReadAllText(accountsConfigPath);
+                    var accounts = JsonSerializer.Deserialize<List<AccountInfo>>(json);
+                    if (accounts != null)
+                    {
+                        foreach (var account in accounts)
+                        {
+                            savedPaths.Add(account.WebView2Path);
+                        }
+                    }
                 }
 
-                // 清理用户数据目录
-                if (Directory.Exists(userDataFolder))
+                // 获取WebView2Data目录
+                string webView2BaseDir = Path.Combine(
+                    AppDomain.CurrentDomain.BaseDirectory,
+                    "WebView2Data"
+                );
+
+                if (Directory.Exists(webView2BaseDir))
                 {
-                    try
+                    foreach (string dir in Directory.GetDirectories(webView2BaseDir))
                     {
-                        Directory.Delete(userDataFolder, true);
+                        // 如果目录不在已保存的账号列表中，则删除
+                        if (!savedPaths.Contains(dir))
+                        {
+                            try
+                            {
+                                Directory.Delete(dir, true);
+                            }
+                            catch (Exception ex)
+                            {
+                                // 忽略删除失败的错误，通常是因为文件被占用
+                                Debug.WriteLine($"清理临时目录失败: {ex.Message}");
+                            }
+                        }
                     }
-                    catch (Exception ex)
-                    {
-                        Debug.WriteLine($"清理用户数据目录时出错: {ex.Message}");
-                    }
+                }
+
+                // 关闭 WebView2
+                if (webView2 != null)
+                {
+                    webView2.Dispose();
                 }
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"清理设置文件时出错: {ex.Message}");
+                Debug.WriteLine($"清理资源时出错: {ex.Message}");
+            }
+        }
+
+        private async void SaveAccount(string accountName)
+        {
+            try
+            {
+                string accountsDirectory = Path.Combine(
+                    AppDomain.CurrentDomain.BaseDirectory,
+                    "Accounts"
+                );
+                string accountPath = Path.Combine(accountsDirectory, accountName);
+                
+                // 创建账号目录
+                Directory.CreateDirectory(accountPath);
+
+                // 保存 cookies
+                var cookies = await webView2.CoreWebView2.CookieManager.GetCookiesAsync("https://gamer.qq.com");
+                var cookiesJson = JsonSerializer.Serialize(cookies.Select(c => new
+                {
+                    c.Name,
+                    c.Value,
+                    c.Domain,
+                    c.Path,
+                    IsSecure = c.IsSecure,
+                    IsHttpOnly = c.IsHttpOnly,
+                    c.SameSite,
+                    Expires = c.Expires.ToString("O")
+                }));
+                File.WriteAllText(Path.Combine(accountPath, "cookies.json"), cookiesJson);
+
+                // 保存 localStorage
+                var localStorageJson = await webView2.CoreWebView2.ExecuteScriptAsync(
+                    "JSON.stringify(Object.entries(localStorage))");
+                File.WriteAllText(Path.Combine(accountPath, "localStorage.json"), localStorageJson);
+
+                // 复制用户数据目录
+                if (!string.IsNullOrEmpty(CurrentUserDataFolder))
+                {
+                    var userDataPath = Path.Combine(accountPath, "UserData");
+                    if (Directory.Exists(userDataPath))
+                    {
+                        Directory.Delete(userDataPath, true);
+                    }
+                    CopyDirectory(CurrentUserDataFolder, userDataPath);
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"保存账号时出错: {ex.Message}");
+            }
+        }
+
+        private void CopyDirectory(string sourceDir, string destinationDir)
+        {
+            // 创建目标目录
+            Directory.CreateDirectory(destinationDir);
+
+            // 复制文件
+            foreach (string file in Directory.GetFiles(sourceDir))
+            {
+                try
+                {
+                    string destFile = Path.Combine(destinationDir, Path.GetFileName(file));
+                    File.Copy(file, destFile, true);
+                }
+                catch (IOException)
+                {
+                    // 忽略被锁定文件的复制错误
+                    continue;
+                }
+            }
+
+            // 递归复制子目录
+            foreach (string dir in Directory.GetDirectories(sourceDir))
+            {
+                try
+                {
+                    string destDir = Path.Combine(destinationDir, Path.GetFileName(dir));
+                    CopyDirectory(dir, destDir);
+                }
+                catch (IOException)
+                {
+                    // 忽略被锁定目录的复制错误
+                    continue;
+                }
+            }
+        }
+
+        // 切换用户数据目录的方法
+        internal async Task SwitchUserDataFolder(string newUserDataFolder)
+        {
+            try
+            {
+                // 保存当前的 WebView2 状态
+                var currentUrl = webView2.Source;
+
+                // 关闭当前的 WebView2 实例
+                webView2.Dispose();
+                await Task.Delay(500); // 等待资源释放
+
+                // 创建新的 WebView2 实例
+                webView2 = new WebView2();
+                webView2.Location = new Point(0, btnStartStop.Height + 10);
+                webView2.Size = new Size(960, 540);
+                this.Controls.Add(webView2);
+
+                // 使用新的用户数据目录初始化 WebView2
+                var options = new CoreWebView2EnvironmentOptions();
+                if (!checkBoxGPU.Checked)
+                {
+                    options.AdditionalBrowserArguments = "--disable-gpu";
+                }
+                else
+                {
+                    options.AdditionalBrowserArguments = "--use-angle=d3d11 --gpu-preference=high-performance";
+                }
+
+                // 创建环境前确保目录存在
+                Directory.CreateDirectory(newUserDataFolder);
+
+                // 创建新的 WebView2 环境
+                var env = await CoreWebView2Environment.CreateAsync(null, newUserDataFolder, options);
+                await webView2.EnsureCoreWebView2Async(env);
+
+                // 设置 DPI 缩放
+                float dpiScale;
+                using (var graphics = this.CreateGraphics())
+                {
+                    dpiScale = graphics.DpiX / 96.0f;
+                }
+
+                if (Math.Abs(dpiScale - 1.0f) > 0.01f)
+                {
+                    webView2.CoreWebView2.Settings.IsZoomControlEnabled = false;
+                    await Task.Delay(500);
+                    webView2.ZoomFactor = 1.0 / dpiScale;
+                }
+
+                // 更新当前用户数据目录
+                CurrentUserDataFolder = newUserDataFolder;
+
+                // 等待页面加载完成并自动应用游戏设置
+                var tcs = new TaskCompletionSource<bool>();
+                
+                // 创建事件处理程序
+                EventHandler<CoreWebView2NavigationCompletedEventArgs> navigationCompletedHandler = null;
+                navigationCompletedHandler = async (s, e) => 
+                {
+                    try 
+                    {
+                        // 移除事件处理程序，确保只执行一次
+                        webView2.NavigationCompleted -= navigationCompletedHandler;
+                        
+                        // 等待一段时间确保页面完全加载
+                        await Task.Delay(2000);
+                        
+                        // 创建取消令牌
+                        using (var cts = new CancellationTokenSource())
+                        {
+                            // 设置超时时间为30秒
+                            cts.CancelAfter(TimeSpan.FromSeconds(30));
+                            // 应用游戏设置
+                            await ControlActions.ApplyGameSettings(webView2, cts.Token);
+                        }
+                    }
+                    catch (OperationCanceledException)
+                    {
+                        Debug.WriteLine("应用游戏设置超时");
+                    }
+                    catch (Exception ex)
+                    {
+                        Debug.WriteLine($"应用游戏设置时出错: {ex.Message}");
+                    }
+                    finally
+                    {
+                        tcs.TrySetResult(true);
+                    }
+                };
+
+                // 添加事件处理程序
+                webView2.NavigationCompleted += navigationCompletedHandler;
+
+                // 导航到之前的 URL 或默认 URL
+                if (currentUrl != null)
+                {
+                    webView2.CoreWebView2.Navigate(currentUrl.ToString());
+                }
+                else
+                {
+                    webView2.CoreWebView2.Navigate("https://gamer.qq.com/v2/game/96897");
+                }
+
+                // 等待导航和设置完成
+                await tcs.Task;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"切换用户数据目录失败: {ex.Message}", "错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                throw;
             }
         }
     }
