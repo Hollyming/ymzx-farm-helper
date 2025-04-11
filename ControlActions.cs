@@ -54,35 +54,35 @@ namespace ymzx
         public delegate Task ScheduledTask(WebView2 webView, CancellationToken token);
 
         // 添加在类的开头部分
-        private static float? _dpiScale = null;
+        // private static float? _dpiScale = null;
 
         // 获取DPI缩放比例的方法
-        private static float GetDpiScale()
-        {
-            if (_dpiScale.HasValue)
-                return _dpiScale.Value;
+        // private static float GetDpiScale()
+        // {
+        //     if (_dpiScale.HasValue)
+        //         return _dpiScale.Value;
 
-            if (mainForm == null || mainForm.IsDisposed)
-                return 1.0f;
+        //     if (mainForm == null || mainForm.IsDisposed)
+        //         return 1.0f;
 
-            // 获取主显示器的DPI缩放
-            using (Graphics g = mainForm.CreateGraphics())
-            {
-                _dpiScale = g.DpiX / 96.0f;  // 96 DPI是基准值
-                Console.WriteLine($"windows dpi scale valuevalue: {_dpiScale}");
-                return _dpiScale.Value;
-            }
-        }
+        //     // 获取主显示器的DPI缩放
+        //     using (Graphics g = mainForm.CreateGraphics())
+        //     {
+        //         _dpiScale = g.DpiX / 96.0f;  // 96 DPI是基准值
+        //         Console.WriteLine($"windows dpi scale valuevalue: {_dpiScale}");
+        //         return _dpiScale.Value;
+        //     }
+        // }
 
         // 添加坐标转换方法
-        private static Point ScalePoint(Point original)
-        {
-            float scale = GetDpiScale();
-            return new Point(
-                (int)(original.X / scale),
-                (int)(original.Y / scale)
-            );
-        }
+        // private static Point ScalePoint(Point original)
+        // {
+        //     float scale = GetDpiScale();
+        //     return new Point(
+        //         (int)(original.X / scale),
+        //         (int)(original.Y / scale)
+        //     );
+        // }
 
         // "开始/停止"按钮点击事件
         public static async void BtnStartStop_Click(object? sender, EventArgs e)
@@ -101,28 +101,26 @@ namespace ymzx
                 if (form1.checkBoxNoMonthlyCard.Checked)
                 {
                     // 显示手动循环设置窗体，传入当前进程ID
-                    using (var settingsForm = new ManualLoopSettingsForm(Process.GetCurrentProcess().Id))
+                    using var settingsForm = new ManualLoopSettingsForm(Environment.ProcessId);
+                    if (settingsForm.ShowDialog() == DialogResult.OK)
                     {
-                        if (settingsForm.ShowDialog() == DialogResult.OK)
-                        {
-                            automationTask = RunManualLoop(
-                                form1.webView2, 
-                                automationCts.Token,
-                                settingsForm.FarmRanchTimes,
-                                settingsForm.ExecuteWorkshop,
-                                settingsForm.ExecuteFishing,
-                                settingsForm.FishingCount,
-                                settingsForm.RestTimeSeconds
-                            );
-                        }
-                        else
-                        {
-                            // 用户取消设置，恢复按钮状态
-                            btn.Text = "开始/停止";
-                            automationCts.Cancel();
-                            automationCts = null;
-                            return;
-                        }
+                        automationTask = RunManualLoop(
+                            form1.webView2,
+                            automationCts.Token,
+                            settingsForm.FarmRanchTimes,
+                            settingsForm.ExecuteWorkshop,
+                            settingsForm.ExecuteFishing,
+                            settingsForm.FishingCount,
+                            settingsForm.RestTimeSeconds
+                        );
+                    }
+                    else
+                    {
+                        // 用户取消设置，恢复按钮状态
+                        btn.Text = "开始/停止";
+                        automationCts.Cancel();
+                        automationCts = null;
+                        return;
                     }
                 }
                 else
@@ -160,32 +158,22 @@ namespace ymzx
         }
 
         // 定时任务配置
-        public class TaskSchedule
+        public class TaskSchedule(string name, ControlActions.ScheduledTask task, int hour, int minute, bool enabled = false, string extraParam = "")
         {
-            public string TaskName { get; set; }
-            public ScheduledTask Task { get; set; }
-            public int ExecutionHour { get; set; }
-            public int ExecutionMinute { get; set; }
-            public bool IsEnabled { get; set; }
-            public string ExtraParam { get; set; } // 添加额外参数，用于存储泡温泉玩家UID/昵称
-
-            public TaskSchedule(string name, ScheduledTask task, int hour, int minute, bool enabled = false, string extraParam = "")
-            {
-                TaskName = name;
-                Task = task;
-                ExecutionHour = hour;
-                ExecutionMinute = minute;
-                IsEnabled = enabled;
-                ExtraParam = extraParam;
-            }
+            public string TaskName { get; set; } = name;
+            public ScheduledTask Task { get; set; } = task;
+            public int ExecutionHour { get; set; } = hour;
+            public int ExecutionMinute { get; set; } = minute;
+            public bool IsEnabled { get; set; } = enabled;
+            public string ExtraParam { get; set; } = extraParam;
         }
 
         // 定时任务列表
         private static readonly List<TaskSchedule> scheduledTasks = new List<TaskSchedule>
         {
-            new TaskSchedule("FishTank", async (webView, token) => await FishTankOperation(webView, token), 5, 0, false),//鱼缸收获，默认时间5点，默认不启用
-            new TaskSchedule("Fishing", async (webView, token) => await StealFishingOperation(webView, token), 12, 0, false, ""),//偷鱼，默认时间12点，默认不启用
-            new TaskSchedule("HotSpring", async (webView, token) => await HotSpringOperation(webView, token), 20, 0, false, ""),//泡温泉，默认时间20点，默认不启用
+            new("FishTank", async (webView, token) => await FishTankOperation(webView, token), 5, 0, false),//鱼缸收获，默认时间5点，默认不启用
+            new("Fishing", async (webView, token) => await StealFishingOperation(webView, token), 12, 0, false, ""),//偷鱼，默认时间12点，默认不启用
+            new("HotSpring", async (webView, token) => await HotSpringOperation(webView, token), 20, 0, false, ""),//泡温泉，默认时间20点，默认不启用
             // 在这里添加更多定时任务
             // new TaskSchedule("OtherTask", OtherTaskOperation, 12, 0),
         };
@@ -1155,23 +1143,23 @@ namespace ymzx
         // 辅助方法：点击指定坐标
         private static async Task ClickPoint(WebView2 webView, Point point)
         {
-            Point scaledPoint = ScalePoint(point);
+            // Point scaledPoint = ScalePoint(point);
             // 先显示点击效果
-            await ShowClickEffect(webView, scaledPoint.X, scaledPoint.Y);
+            await ShowClickEffect(webView, point.X, point.Y);
             
             if (webView.CoreWebView2 != null)
             {
                 string script = $@"
                     (function() {{
-                        const element = document.elementFromPoint({scaledPoint.X}, {scaledPoint.Y});
+                        const element = document.elementFromPoint({point.X}, {point.Y});
                         if (element) {{
                             // mousedown
                             element.dispatchEvent(new MouseEvent('mousedown', {{
                                 bubbles: true,
                                 cancelable: true,
                                 view: window,
-                                clientX: {scaledPoint.X},
-                                clientY: {scaledPoint.Y}
+                                clientX: {point.X},
+                                clientY: {point.Y}
                             }}));
 
                             // mouseup
@@ -1179,8 +1167,8 @@ namespace ymzx
                                 bubbles: true,
                                 cancelable: true,
                                 view: window,
-                                clientX: {scaledPoint.X},
-                                clientY: {scaledPoint.Y}
+                                clientX: {point.X},
+                                clientY: {point.Y}
                             }}));
 
                             // click
@@ -1188,8 +1176,8 @@ namespace ymzx
                                 bubbles: true,
                                 cancelable: true,
                                 view: window,
-                                clientX: {scaledPoint.X},
-                                clientY: {scaledPoint.Y}
+                                clientX: {point.X},
+                                clientY: {point.Y}
                             }}));
                         }}
                     }})();
@@ -1203,21 +1191,21 @@ namespace ymzx
         // 辅助方法：模拟鼠标拖动
         private static async Task SimulateMouseDrag(WebView2 webView, int startX, int startY, int endX, int endY, int durationMs)
         {
-            Point scaledStart = ScalePoint(new Point(startX, startY));
-            Point scaledEnd = ScalePoint(new Point(endX, endY));
+            Point StartPoint = new(startX, startY);
+            Point EndPoint = new(endX, endY);
             
             string script = $@"
                 (function() {{
                     // 创建轨迹线
                     const line = document.createElement('div');
                     line.style.position = 'absolute';
-                    line.style.left = '{scaledStart.X}px';
-                    line.style.top = '{scaledStart.Y}px';
-                    line.style.width = '{Math.Sqrt(Math.Pow(scaledEnd.X - scaledStart.X, 2) + Math.Pow(scaledEnd.Y - scaledStart.Y, 2))}px';
+                    line.style.left = '{StartPoint.X}px';
+                    line.style.top = '{StartPoint.Y}px';
+                    line.style.width = '{Math.Sqrt(Math.Pow(EndPoint.X - StartPoint.X, 2) + Math.Pow(EndPoint.Y - StartPoint.Y, 2))}px';
                     line.style.height = '2px';
                     line.style.backgroundColor = 'rgba(0, 255, 0, 0.5)';
                     line.style.transformOrigin = 'left';
-                    line.style.transform = 'rotate(' + Math.atan2({scaledEnd.Y - scaledStart.Y}, {scaledEnd.X - scaledStart.X}) + 'rad)';
+                    line.style.transform = 'rotate(' + Math.atan2({EndPoint.Y - StartPoint.Y}, {EndPoint.X - StartPoint.X}) + 'rad)';
                     line.style.pointerEvents = 'none';
                     line.style.zIndex = '10000';
                     document.body.appendChild(line);
@@ -1225,8 +1213,8 @@ namespace ymzx
                     // 创建起点标记
                     const startDot = document.createElement('div');
                     startDot.style.position = 'absolute';
-                    startDot.style.left = '{scaledStart.X}px';
-                    startDot.style.top = '{scaledStart.Y}px';
+                    startDot.style.left = '{StartPoint.X}px';
+                    startDot.style.top = '{StartPoint.Y}px';
                     startDot.style.width = '10px';
                     startDot.style.height = '10px';
                     startDot.style.backgroundColor = 'rgba(0, 255, 0, 0.8)';
@@ -1240,21 +1228,21 @@ namespace ymzx
                         bubbles: true,
                         cancelable: true,
                         view: window,
-                        clientX: {scaledStart.X},
-                        clientY: {scaledStart.Y}
+                        clientX: {StartPoint.X},
+                        clientY: {StartPoint.Y}
                     }});
-                    document.elementFromPoint({scaledStart.X}, {scaledStart.Y}).dispatchEvent(downEvt);
+                    document.elementFromPoint({StartPoint.X}, {StartPoint.Y}).dispatchEvent(downEvt);
 
                     // 修改移动事件的坐标计算
                     const steps = 50;
                     const stepDuration = {durationMs} / steps;
-                    const dx = ({scaledEnd.X} - {scaledStart.X}) / steps;
-                    const dy = ({scaledEnd.Y} - {scaledStart.Y}) / steps;
+                    const dx = ({EndPoint.X} - {StartPoint.X}) / steps;
+                    const dy = ({EndPoint.Y} - {StartPoint.Y}) / steps;
 
                     for(let i = 1; i <= steps; i++) {{
                         setTimeout(() => {{
-                            const x = {scaledStart.X} + dx * i;
-                            const y = {scaledStart.Y} + dy * i;
+                            const x = {StartPoint.X} + dx * i;
+                            const y = {StartPoint.Y} + dy * i;
                             const moveEvt = new MouseEvent('mousemove', {{
                                 bubbles: true,
                                 cancelable: true,
@@ -1272,10 +1260,10 @@ namespace ymzx
                             bubbles: true,
                             cancelable: true,
                             view: window,
-                            clientX: {scaledEnd.X},
-                            clientY: {scaledEnd.Y}
+                            clientX: {EndPoint.X},
+                            clientY: {EndPoint.Y}
                         }});
-                        document.elementFromPoint({scaledEnd.X}, {scaledEnd.Y}).dispatchEvent(upEvt);
+                        document.elementFromPoint({EndPoint.X}, {EndPoint.Y}).dispatchEvent(upEvt);
                         // window.chrome.webview.hostObjects.sync.dragComplete.set(true);
                     }}, {durationMs});
 
