@@ -1485,19 +1485,25 @@ namespace ymzx
             Form stealOptionsForm = new Form()
             {
                 Text = "偷菜选项",
-                Size = new Size(200, 150),
+                Size = new Size(180, 180),  // 减小窗体宽度
                 FormBorderStyle = FormBorderStyle.FixedDialog,
                 StartPosition = FormStartPosition.CenterParent,
                 MaximizeBox = false,
                 MinimizeBox = false
             };
 
+            // 计算按钮间距和位置
+            int buttonWidth = 140;  // 减小按钮宽度
+            int buttonHeight = 30;
+            int spacing = 3;
+            int startY = 10;
+
             // 添加三个按钮
             Button btnFarm = new Button()
             {
                 Text = "偷农场",
-                Size = new Size(160, 30),
-                Location = new Point(15, 10),
+                Size = new Size(buttonWidth, buttonHeight),
+                Location = new Point(10, startY),  // 使用窗体宽度计算
                 FlatStyle = FlatStyle.Flat
             };
             btnFarm.FlatAppearance.BorderSize = 0;
@@ -1547,8 +1553,8 @@ namespace ymzx
             Button btnRanch = new Button()
             {
                 Text = "偷牧场",
-                Size = new Size(160, 30),
-                Location = new Point(15, 50),
+                Size = new Size(buttonWidth, buttonHeight),
+                Location = new Point(10, startY + buttonHeight + spacing),  // 使用窗体宽度计算
                 FlatStyle = FlatStyle.Flat
             };
             btnRanch.FlatAppearance.BorderSize = 0;
@@ -1599,8 +1605,8 @@ namespace ymzx
             Button btnFishing = new Button()
             {
                 Text = "钓鱼",
-                Size = new Size(160, 30),
-                Location = new Point(15, 90),
+                Size = new Size(buttonWidth, buttonHeight),
+                Location = new Point(10, startY + (buttonHeight + spacing) * 2),  // 使用窗体宽度计算
                 FlatStyle = FlatStyle.Flat,
                 Enabled = true
             };

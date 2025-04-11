@@ -31,6 +31,10 @@ namespace ymzx
                 $"manual_settings_{processId}.json"
             );
             
+            // 设置DPI缩放模式
+            this.AutoScaleMode = AutoScaleMode.Dpi;
+            this.AutoScaleDimensions = new System.Drawing.SizeF(96F, 96F);
+            
             InitializeComponents();
             LoadSettings();
         }
@@ -38,67 +42,88 @@ namespace ymzx
         private void InitializeComponents()
         {
             this.Text = "手动循环设置";
-            this.Size = new System.Drawing.Size(300, 300);
             this.FormBorderStyle = FormBorderStyle.FixedDialog;
             this.StartPosition = FormStartPosition.CenterParent;
             this.MaximizeBox = false;
             this.MinimizeBox = false;
+            this.AutoSize = true;
+            this.AutoSizeMode = AutoSizeMode.GrowAndShrink;
+            this.Padding = new Padding(10);
+
+            // 获取系统DPI缩放比例
+            float dpiScale;
+            using (var graphics = this.CreateGraphics())
+            {
+                dpiScale = graphics.DpiX / 96.0f;
+            }
+
+            // 根据DPI缩放调整控件大小和位置
+            int baseSpacing = (int)(8 * dpiScale);
+            int baseControlHeight = (int)(25 * dpiScale);
+            int baseControlWidth = (int)(120 * dpiScale);
+            int currentY = baseSpacing;
 
             // 农场牧场次数选择
             Label lblFarmRanch = new Label
             {
                 Text = "农场+牧场次数:",
-                Location = new System.Drawing.Point(20, 20),
-                Size = new System.Drawing.Size(100, 20),
-                AutoSize = true
+                Location = new System.Drawing.Point(baseSpacing, currentY),
+                Size = new System.Drawing.Size(baseControlWidth, baseControlHeight),
+                TextAlign = ContentAlignment.MiddleLeft
             };
             this.Controls.Add(lblFarmRanch);
 
             comboBoxFarmRanchTimes = new ComboBox
             {
-                Location = new System.Drawing.Point(120, 20),
-                Size = new System.Drawing.Size(100, 20),
+                Location = new System.Drawing.Point(baseSpacing + baseControlWidth + baseSpacing, currentY),
+                Size = new System.Drawing.Size(baseControlWidth, baseControlHeight),
                 DropDownStyle = ComboBoxStyle.DropDownList
             };
             comboBoxFarmRanchTimes.Items.AddRange(new object[] { "0", "1", "2" });
-            comboBoxFarmRanchTimes.SelectedIndex = 2; // 默认选择2次
+            comboBoxFarmRanchTimes.SelectedIndex = 2;
             this.Controls.Add(comboBoxFarmRanchTimes);
+
+            currentY += baseControlHeight + baseSpacing;
 
             // 加工坊勾选框
             checkBoxWorkshop = new CheckBox
             {
                 Text = "执行加工坊",
-                Location = new System.Drawing.Point(20, 60),
-                Size = new System.Drawing.Size(200, 20),
+                Location = new System.Drawing.Point(baseSpacing, currentY),
+                Size = new System.Drawing.Size(baseControlWidth * 2, baseControlHeight),
                 Checked = true
             };
             this.Controls.Add(checkBoxWorkshop);
+
+            currentY += baseControlHeight + baseSpacing;
 
             // 钓鱼勾选框
             checkBoxFishing = new CheckBox
             {
                 Text = "执行钓鱼",
-                Location = new System.Drawing.Point(20, 90),
-                Size = new System.Drawing.Size(200, 20),
+                Location = new System.Drawing.Point(baseSpacing, currentY),
+                Size = new System.Drawing.Size(baseControlWidth * 2, baseControlHeight),
                 Checked = false
             };
             checkBoxFishing.CheckedChanged += CheckBoxFishing_CheckedChanged;
             this.Controls.Add(checkBoxFishing);
 
+            currentY += baseControlHeight + baseSpacing;
+
             // 钓鱼次数输入框
             Label lblFishingCount = new Label
             {
                 Text = "钓鱼次数:",
-                Location = new System.Drawing.Point(20, 120),
-                Size = new System.Drawing.Size(100, 20),
-                AutoSize = true
+                Location = new System.Drawing.Point(baseSpacing, currentY),
+                Size = new System.Drawing.Size(baseControlWidth, baseControlHeight),
+                TextAlign = ContentAlignment.MiddleLeft
             };
             this.Controls.Add(lblFishingCount);
 
             numericUpDownFishingCount = new NumericUpDown
             {
-                Location = new System.Drawing.Point(120, 120),
-                Size = new System.Drawing.Size(100, 20),
+                Location = new System.Drawing.Point(baseSpacing + baseControlWidth + baseSpacing, currentY),
+                Size = new System.Drawing.Size(baseControlWidth, baseControlHeight),
                 Minimum = 1,
                 Maximum = 100,
                 Value = 24,
@@ -106,46 +131,61 @@ namespace ymzx
             };
             this.Controls.Add(numericUpDownFishingCount);
 
+            currentY += baseControlHeight + baseSpacing;
+
             // 休息时长设置
             labelRestTime = new Label
             {
                 Text = "休息时长:",
-                Location = new System.Drawing.Point(20, 150),
-                Size = new System.Drawing.Size(100, 20),
-                AutoSize = true
+                Location = new System.Drawing.Point(baseSpacing, currentY),
+                Size = new System.Drawing.Size(baseControlWidth, baseControlHeight),
+                TextAlign = ContentAlignment.MiddleLeft
             };
             this.Controls.Add(labelRestTime);
 
             comboBoxRestTime = new ComboBox
             {
-                Location = new System.Drawing.Point(120, 150),
-                Size = new System.Drawing.Size(100, 20),
+                Location = new System.Drawing.Point(baseSpacing + baseControlWidth + baseSpacing, currentY),
+                Size = new System.Drawing.Size(baseControlWidth, baseControlHeight),
                 DropDownStyle = ComboBoxStyle.DropDownList
             };
             comboBoxRestTime.Items.AddRange(new object[] { "不休息", "30秒", "1分钟", "2分钟" });
             comboBoxRestTime.SelectedIndex = 0;
             this.Controls.Add(comboBoxRestTime);
 
+            currentY += baseControlHeight + baseSpacing * 2;
+
+            // 按钮布局
+            FlowLayoutPanel buttonPanel = new FlowLayoutPanel
+            {
+                FlowDirection = FlowDirection.LeftToRight,
+                AutoSize = true,
+                AutoSizeMode = AutoSizeMode.GrowAndShrink,
+                Location = new System.Drawing.Point(baseSpacing, currentY),
+                Padding = new Padding(0)
+            };
+
             // 确定按钮
             btnOK = new Button
             {
                 Text = "确定",
                 DialogResult = DialogResult.OK,
-                Location = new System.Drawing.Point(60, 200),
-                Size = new System.Drawing.Size(80, 30)
+                Size = new System.Drawing.Size(baseControlWidth, baseControlHeight)
             };
             btnOK.Click += BtnOK_Click;
-            this.Controls.Add(btnOK);
+            buttonPanel.Controls.Add(btnOK);
 
             // 取消按钮
             btnCancel = new Button
             {
                 Text = "取消",
                 DialogResult = DialogResult.Cancel,
-                Location = new System.Drawing.Point(160, 200),
-                Size = new System.Drawing.Size(80, 30)
+                Size = new System.Drawing.Size(baseControlWidth, baseControlHeight),
+                Margin = new Padding(baseSpacing, 0, 0, 0)
             };
-            this.Controls.Add(btnCancel);
+            buttonPanel.Controls.Add(btnCancel);
+
+            this.Controls.Add(buttonPanel);
         }
 
         private void LoadSettings()

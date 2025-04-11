@@ -31,170 +31,273 @@ namespace ymzx
 
         public ScheduledTasksForm()
         {
+            // 设置DPI缩放模式
+            this.AutoScaleMode = AutoScaleMode.Dpi;
+            this.AutoScaleDimensions = new System.Drawing.SizeF(96F, 96F);
+            
             InitializeComponent();
             LoadCurrentSettings();
         }
 
         private void InitializeComponent()
         {
+            // 获取系统DPI缩放比例
+            float dpiScale;
+            using (var graphics = this.CreateGraphics())
+            {
+                dpiScale = graphics.DpiX / 96.0f;
+            }
+
+            // 根据DPI缩放调整基础尺寸
+            int baseSpacing = (int)(8 * dpiScale);
+            int baseControlHeight = (int)(25 * dpiScale);
+            int baseControlWidth = (int)(120 * dpiScale);
+            int timeControlWidth = (int)(60 * dpiScale);
+
             this.Text = "定时任务设置";
-            this.Size = new System.Drawing.Size(350, 400); // 调整整体窗口宽度
             this.FormBorderStyle = FormBorderStyle.FixedDialog;
             this.MaximizeBox = false;
             this.MinimizeBox = false;
             this.StartPosition = FormStartPosition.CenterParent;
+            this.AutoSize = true;
+            this.AutoSizeMode = AutoSizeMode.GrowAndShrink;
+            this.Padding = new Padding(10);
+
+            int currentY = baseSpacing;
 
             // 鱼缸收获任务复选框
             checkBoxFishTank = new CheckBox();
             checkBoxFishTank.Text = "启用鱼缸收获";
-            checkBoxFishTank.Location = new System.Drawing.Point(20, 20);
-            checkBoxFishTank.Size = new System.Drawing.Size(150, 20);
+            checkBoxFishTank.Location = new System.Drawing.Point(baseSpacing, currentY);
+            checkBoxFishTank.Size = new System.Drawing.Size(baseControlWidth * 2, baseControlHeight);
             checkBoxFishTank.CheckedChanged += CheckBoxFishTank_CheckedChanged;
+            this.Controls.Add(checkBoxFishTank);
 
-            // 小时标签
-            labelHour = new Label();
-            labelHour.Text = "时";
-            labelHour.Location = new System.Drawing.Point(20, 50);
-            labelHour.Size = new System.Drawing.Size(30, 20);
+            currentY += baseControlHeight + baseSpacing;
 
-            // 小时输入框
-            numericUpDownHour = new NumericUpDown();
-            numericUpDownHour.Location = new System.Drawing.Point(50, 50);
-            numericUpDownHour.Size = new System.Drawing.Size(50, 20);
-            numericUpDownHour.Minimum = 0;
-            numericUpDownHour.Maximum = 23;
+            // 时间设置面板
+            FlowLayoutPanel timePanel = new FlowLayoutPanel
+            {
+                FlowDirection = FlowDirection.LeftToRight,
+                Location = new System.Drawing.Point(baseSpacing * 3, currentY),
+                AutoSize = true,
+                AutoSizeMode = AutoSizeMode.GrowAndShrink,
+                Margin = new Padding(0)
+            };
 
-            // 分钟标签
-            labelMinute = new Label();
-            labelMinute.Text = "分";
-            labelMinute.Location = new System.Drawing.Point(120, 50);
-            labelMinute.Size = new System.Drawing.Size(30, 20);
+            // 小时设置
+            labelHour = new Label
+            {
+                Text = "时",
+                AutoSize = true,
+                TextAlign = ContentAlignment.MiddleLeft,
+                Margin = new Padding(0, 5, baseSpacing, 0)
+            };
 
-            // 分钟输入框
-            numericUpDownMinute = new NumericUpDown();
-            numericUpDownMinute.Location = new System.Drawing.Point(150, 50);
-            numericUpDownMinute.Size = new System.Drawing.Size(50, 20);
-            numericUpDownMinute.Minimum = 0;
-            numericUpDownMinute.Maximum = 59;
-            
-            // 钓鱼任务复选框
+            numericUpDownHour = new NumericUpDown
+            {
+                Size = new System.Drawing.Size(timeControlWidth, baseControlHeight),
+                Minimum = 0,
+                Maximum = 23,
+                Margin = new Padding(0, 0, baseSpacing * 2, 0)
+            };
+
+            // 分钟设置
+            labelMinute = new Label
+            {
+                Text = "分",
+                AutoSize = true,
+                TextAlign = ContentAlignment.MiddleLeft,
+                Margin = new Padding(0, 5, baseSpacing, 0)
+            };
+
+            numericUpDownMinute = new NumericUpDown
+            {
+                Size = new System.Drawing.Size(timeControlWidth, baseControlHeight),
+                Minimum = 0,
+                Maximum = 59
+            };
+
+            timePanel.Controls.AddRange(new Control[] { labelHour, numericUpDownHour, labelMinute, numericUpDownMinute });
+            this.Controls.Add(timePanel);
+
+            currentY += baseControlHeight + baseSpacing * 2;
+
+            // 钓鱼任务设置
             checkBoxFishing = new CheckBox();
             checkBoxFishing.Text = "启用定时偷鱼";
-            checkBoxFishing.Location = new System.Drawing.Point(20, 100);
-            checkBoxFishing.Size = new System.Drawing.Size(150, 20);
+            checkBoxFishing.Location = new System.Drawing.Point(baseSpacing, currentY);
+            checkBoxFishing.Size = new System.Drawing.Size(baseControlWidth * 2, baseControlHeight);
             checkBoxFishing.CheckedChanged += CheckBoxFishing_CheckedChanged;
+            this.Controls.Add(checkBoxFishing);
 
-            // 钓鱼小时标签
-            labelFishingHour = new Label();
-            labelFishingHour.Text = "时";
-            labelFishingHour.Location = new System.Drawing.Point(20, 130);
-            labelFishingHour.Size = new System.Drawing.Size(30, 20);
+            currentY += baseControlHeight + baseSpacing;
 
-            // 钓鱼小时输入框
-            numericUpDownFishingHour = new NumericUpDown();
-            numericUpDownFishingHour.Location = new System.Drawing.Point(50, 130);
-            numericUpDownFishingHour.Size = new System.Drawing.Size(50, 20);
-            numericUpDownFishingHour.Minimum = 0;
-            numericUpDownFishingHour.Maximum = 23;
+            // 钓鱼时间设置面板
+            FlowLayoutPanel fishingTimePanel = new FlowLayoutPanel
+            {
+                FlowDirection = FlowDirection.LeftToRight,
+                Location = new System.Drawing.Point(baseSpacing * 3, currentY),
+                AutoSize = true,
+                AutoSizeMode = AutoSizeMode.GrowAndShrink,
+                Margin = new Padding(0)
+            };
 
-            // 钓鱼分钟标签
-            labelFishingMinute = new Label();
-            labelFishingMinute.Text = "分";
-            labelFishingMinute.Location = new System.Drawing.Point(120, 130);
-            labelFishingMinute.Size = new System.Drawing.Size(30, 20);
+            labelFishingHour = new Label
+            {
+                Text = "时",
+                AutoSize = true,
+                TextAlign = ContentAlignment.MiddleLeft,
+                Margin = new Padding(0, 5, baseSpacing, 0)
+            };
 
-            // 钓鱼分钟输入框
-            numericUpDownFishingMinute = new NumericUpDown();
-            numericUpDownFishingMinute.Location = new System.Drawing.Point(150, 130);
-            numericUpDownFishingMinute.Size = new System.Drawing.Size(50, 20);
-            numericUpDownFishingMinute.Minimum = 0;
-            numericUpDownFishingMinute.Maximum = 59;
-            
-            // 钓鱼玩家标签
-            labelFishingPlayer = new Label();
-            labelFishingPlayer.Text = "玩家UID/昵称:";
-            labelFishingPlayer.Location = new System.Drawing.Point(20, 160);
-            labelFishingPlayer.Size = new System.Drawing.Size(100, 20);
-            
-            // 钓鱼玩家输入框
-            textBoxFishingPlayer = new TextBox();
-            textBoxFishingPlayer.Location = new System.Drawing.Point(120, 160);
-            textBoxFishingPlayer.Size = new System.Drawing.Size(150, 20);
-            
-            // 泡温泉任务复选框
+            numericUpDownFishingHour = new NumericUpDown
+            {
+                Size = new System.Drawing.Size(timeControlWidth, baseControlHeight),
+                Minimum = 0,
+                Maximum = 23,
+                Margin = new Padding(0, 0, baseSpacing * 2, 0)
+            };
+
+            labelFishingMinute = new Label
+            {
+                Text = "分",
+                AutoSize = true,
+                TextAlign = ContentAlignment.MiddleLeft,
+                Margin = new Padding(0, 5, baseSpacing, 0)
+            };
+
+            numericUpDownFishingMinute = new NumericUpDown
+            {
+                Size = new System.Drawing.Size(timeControlWidth, baseControlHeight),
+                Minimum = 0,
+                Maximum = 59
+            };
+
+            fishingTimePanel.Controls.AddRange(new Control[] { labelFishingHour, numericUpDownFishingHour, labelFishingMinute, numericUpDownFishingMinute });
+            this.Controls.Add(fishingTimePanel);
+
+            currentY += baseControlHeight + baseSpacing;
+
+            // 钓鱼玩家设置
+            FlowLayoutPanel fishingPlayerPanel = new FlowLayoutPanel
+            {
+                FlowDirection = FlowDirection.LeftToRight,
+                Location = new System.Drawing.Point(baseSpacing * 3, currentY),
+                AutoSize = true,
+                AutoSizeMode = AutoSizeMode.GrowAndShrink,
+                Margin = new Padding(0)
+            };
+
+            labelFishingPlayer = new Label
+            {
+                Text = "玩家UID/昵称:",
+                AutoSize = true,
+                TextAlign = ContentAlignment.MiddleLeft,
+                Margin = new Padding(0, 5, baseSpacing, 0)
+            };
+
+            textBoxFishingPlayer = new TextBox
+            {
+                Size = new System.Drawing.Size(baseControlWidth, baseControlHeight)
+            };
+
+            fishingPlayerPanel.Controls.AddRange(new Control[] { labelFishingPlayer, textBoxFishingPlayer });
+            this.Controls.Add(fishingPlayerPanel);
+
+            currentY += baseControlHeight + baseSpacing * 2;
+
+            // 泡温泉任务设置
             checkBoxHotSpring = new CheckBox();
             checkBoxHotSpring.Text = "启用泡温泉";
-            checkBoxHotSpring.Location = new System.Drawing.Point(20, 190);
-            checkBoxHotSpring.Size = new System.Drawing.Size(150, 20);
+            checkBoxHotSpring.Location = new System.Drawing.Point(baseSpacing, currentY);
+            checkBoxHotSpring.Size = new System.Drawing.Size(baseControlWidth * 2, baseControlHeight);
             checkBoxHotSpring.CheckedChanged += CheckBoxHotSpring_CheckedChanged;
+            this.Controls.Add(checkBoxHotSpring);
 
-            // 泡温泉小时标签
-            labelHotSpringHour = new Label();
-            labelHotSpringHour.Text = "时";
-            labelHotSpringHour.Location = new System.Drawing.Point(20, 220);
-            labelHotSpringHour.Size = new System.Drawing.Size(30, 20);
+            currentY += baseControlHeight + baseSpacing;
 
-            // 泡温泉小时输入框
-            numericUpDownHotSpringHour = new NumericUpDown();
-            numericUpDownHotSpringHour.Location = new System.Drawing.Point(50, 220);
-            numericUpDownHotSpringHour.Size = new System.Drawing.Size(50, 20);
-            numericUpDownHotSpringHour.Minimum = 0;
-            numericUpDownHotSpringHour.Maximum = 23;
+            // 温泉时间设置面板
+            FlowLayoutPanel hotSpringTimePanel = new FlowLayoutPanel
+            {
+                FlowDirection = FlowDirection.LeftToRight,
+                Location = new System.Drawing.Point(baseSpacing * 3, currentY),
+                AutoSize = true,
+                AutoSizeMode = AutoSizeMode.GrowAndShrink,
+                Margin = new Padding(0)
+            };
 
-            // 泡温泉分钟标签
-            labelHotSpringMinute = new Label();
-            labelHotSpringMinute.Text = "分";
-            labelHotSpringMinute.Location = new System.Drawing.Point(120, 220);
-            labelHotSpringMinute.Size = new System.Drawing.Size(30, 20);
+            labelHotSpringHour = new Label
+            {
+                Text = "时",
+                AutoSize = true,
+                TextAlign = ContentAlignment.MiddleLeft,
+                Margin = new Padding(0, 5, baseSpacing, 0)
+            };
 
-            // 泡温泉分钟输入框
-            numericUpDownHotSpringMinute = new NumericUpDown();
-            numericUpDownHotSpringMinute.Location = new System.Drawing.Point(150, 220);
-            numericUpDownHotSpringMinute.Size = new System.Drawing.Size(50, 20);
-            numericUpDownHotSpringMinute.Minimum = 0;
-            numericUpDownHotSpringMinute.Maximum = 59;
-            
-            // 泡温泉玩家标签
-            labelHotSpringPlayer = new Label();
-            labelHotSpringPlayer.Text = "玩家UID/昵称:";
-            labelHotSpringPlayer.Location = new System.Drawing.Point(20, 250);
-            labelHotSpringPlayer.Size = new System.Drawing.Size(100, 20);
-            
-            // 泡温泉玩家输入框
-            textBoxHotSpringPlayer = new TextBox();
-            textBoxHotSpringPlayer.Location = new System.Drawing.Point(120, 250);
-            textBoxHotSpringPlayer.Size = new System.Drawing.Size(150, 20);
+            numericUpDownHotSpringHour = new NumericUpDown
+            {
+                Size = new System.Drawing.Size(timeControlWidth, baseControlHeight),
+                Minimum = 0,
+                Maximum = 23,
+                Margin = new Padding(0, 0, baseSpacing * 2, 0)
+            };
+
+            labelHotSpringMinute = new Label
+            {
+                Text = "分",
+                AutoSize = true,
+                TextAlign = ContentAlignment.MiddleLeft,
+                Margin = new Padding(0, 5, baseSpacing, 0)
+            };
+
+            numericUpDownHotSpringMinute = new NumericUpDown
+            {
+                Size = new System.Drawing.Size(timeControlWidth, baseControlHeight),
+                Minimum = 0,
+                Maximum = 59
+            };
+
+            hotSpringTimePanel.Controls.AddRange(new Control[] { labelHotSpringHour, numericUpDownHotSpringHour, labelHotSpringMinute, numericUpDownHotSpringMinute });
+            this.Controls.Add(hotSpringTimePanel);
+
+            currentY += baseControlHeight + baseSpacing;
+
+            // 温泉玩家设置
+            FlowLayoutPanel hotSpringPlayerPanel = new FlowLayoutPanel
+            {
+                FlowDirection = FlowDirection.LeftToRight,
+                Location = new System.Drawing.Point(baseSpacing * 3, currentY),
+                AutoSize = true,
+                AutoSizeMode = AutoSizeMode.GrowAndShrink,
+                Margin = new Padding(0)
+            };
+
+            labelHotSpringPlayer = new Label
+            {
+                Text = "玩家UID/昵称:",
+                AutoSize = true,
+                TextAlign = ContentAlignment.MiddleLeft,
+                Margin = new Padding(0, 5, baseSpacing, 0)
+            };
+
+            textBoxHotSpringPlayer = new TextBox
+            {
+                Size = new System.Drawing.Size(baseControlWidth, baseControlHeight)
+            };
+
+            hotSpringPlayerPanel.Controls.AddRange(new Control[] { labelHotSpringPlayer, textBoxHotSpringPlayer });
+            this.Controls.Add(hotSpringPlayerPanel);
+
+            currentY += baseControlHeight + baseSpacing * 2;
 
             // 确认按钮
             btnConfirm = new Button();
             btnConfirm.Text = "确认";
-            btnConfirm.Location = new System.Drawing.Point(140, 300);
-            btnConfirm.Size = new System.Drawing.Size(75, 23);
+            btnConfirm.Size = new System.Drawing.Size(baseControlWidth, baseControlHeight);
+            btnConfirm.Location = new System.Drawing.Point(baseSpacing, currentY);
             btnConfirm.Click += BtnConfirm_Click;
-
-            // 添加控件到窗体
-            this.Controls.AddRange(new Control[] {
-                checkBoxFishTank,
-                labelHour,
-                numericUpDownHour,
-                labelMinute,
-                numericUpDownMinute,
-                checkBoxFishing,
-                labelFishingHour,
-                numericUpDownFishingHour,
-                labelFishingMinute,
-                numericUpDownFishingMinute,
-                labelFishingPlayer,
-                textBoxFishingPlayer,
-                checkBoxHotSpring,
-                labelHotSpringHour,
-                numericUpDownHotSpringHour,
-                labelHotSpringMinute,
-                numericUpDownHotSpringMinute,
-                labelHotSpringPlayer,
-                textBoxHotSpringPlayer,
-                btnConfirm
-            });
+            this.Controls.Add(btnConfirm);
         }
 
         private void LoadCurrentSettings()
