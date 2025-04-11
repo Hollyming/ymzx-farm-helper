@@ -55,6 +55,40 @@ namespace ymzx
 
             // 添加窗体关闭事件处理
             this.FormClosed += Form1_FormClosed;
+
+            // 添加GPU选项变更事件处理
+            checkBoxGPU.CheckedChanged += async (s, e) => {
+                try {
+                    // 保存当前URL
+                    string currentUrl = webView2.Source?.ToString();
+                    
+                    // 从控件集合中移除当前的WebView2
+                    this.Controls.Remove(webView2);
+                    
+                    // 释放当前的WebView2实例
+                    if (webView2 != null) {
+                        webView2.Dispose();
+                        webView2 = null;
+                    }
+                    
+                    // 创建新的WebView2实例
+                    webView2 = new WebView2();
+                    webView2.Location = new Point(0, btnStartStop.Height + 10);
+                    webView2.Size = new Size(960, 540);
+                    this.Controls.Add(webView2);
+                    
+                    // 重新初始化WebView2
+                    await InitializeWebView2();
+                    
+                    // 重新加载之前的URL
+                    if (!string.IsNullOrEmpty(currentUrl)) {
+                        webView2.CoreWebView2.Navigate(currentUrl);
+                    }
+                }
+                catch (Exception ex) {
+                    MessageBox.Show($"更改GPU设置时出错: {ex.Message}", "错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+            };
         }
 
         private void InitializeControls()
@@ -147,7 +181,7 @@ namespace ymzx
             checkBoxGPU = new CheckBox();
             checkBoxGPU.Text = "启用GPU";
             checkBoxGPU.Checked = true; // 固定为启用GPU
-            checkBoxGPU.Enabled = false; // 禁用用户操作，不可更改
+            checkBoxGPU.Enabled = true; // 允许用户更改GPU设置
             checkBoxGPU.Size = new Size(100, buttonHeight);
             // 放置在倒数第二个位置
             checkBoxGPU.Location = new Point(this.ClientSize.Width - 200 - spacing, startY);
@@ -201,6 +235,9 @@ namespace ymzx
         {
             try
             {
+                // 等待一小段时间确保之前的实例完全释放
+                await Task.Delay(100);
+                
                 // 确保用户数据目录存在
                 if (!Directory.Exists(CurrentUserDataFolder))
                 {
@@ -242,7 +279,8 @@ namespace ymzx
             }
             catch (Exception ex)
             {
-                MessageBox.Show("WebView2 初始化失败: " + ex.Message);
+                MessageBox.Show($"WebView2 初始化失败: {ex.Message}", "错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                throw;
             }
         }
 
