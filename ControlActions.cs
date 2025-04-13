@@ -693,6 +693,10 @@ namespace ymzx
             await HoldKey(webView, "D", 1000);
             await Task.Delay(200, token);
 
+            // 按W键0.25秒
+            await HoldKey(webView, "W", 250);
+            await Task.Delay(200, token);
+
             // 按Q键
             await PressKey(webView, "Q");
             await Task.Delay(200, token);
