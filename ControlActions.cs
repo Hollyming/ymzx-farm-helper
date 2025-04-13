@@ -461,7 +461,7 @@ namespace ymzx
                     // 步骤4：连续按下 10 次中心键，每次间隔 10 秒
                     for (int i = 0; i < 10; i++)
                     {
-                        await ActivateWebPage(webView);
+                        await ClickPoint(webView, RejectFriendPullPoint);
                         if (token.IsCancellationRequested) break;
                         await Task.Delay(10000, token);
                     }
@@ -580,6 +580,76 @@ namespace ymzx
                 }
             }
         }
+
+        // 农场小车操作脚本（65级以后可用）
+        private static async Task FarmCarOperation(WebView2 webView, CancellationToken token)
+        {
+            // 定期检查是否请求取消操作
+            if (token.IsCancellationRequested) return;
+            
+            // 点击刷新按钮
+            await ClickPoint(webView, RefreshButtonPoint);
+            await Task.Delay(200, token);
+
+            // 按D键1秒
+            await HoldKey(webView, "D", 1000);
+            await Task.Delay(200, token);
+
+            // 按W键0.25秒
+            await HoldKey(webView, "W", 250);
+            await Task.Delay(200, token);
+
+            // 按E键
+            await PressKey(webView, "E");
+            await Task.Delay(200, token);
+
+            // 拖动校准发射方向-到第一块地
+            await SimulateMouseDrag(webView, 480, 270, 347, 314, 1300);
+            await Task.Delay(200, token);
+            
+            // 点击万用键（发射）
+            await ClickPoint(webView, UniversalButtonPoint);
+            await Task.Delay(3000, token);
+
+            // 拖动转向回正（小车版本角度）
+            await SimulateMouseDrag(webView, 543, 40, 468, 40, 1300);//465小了，470大了
+            await Task.Delay(200, token);
+
+            //前两列为一个循环，循环3次
+            for (int j = 0; j < 3; j++)
+            {
+                // 按A键0.2秒
+                await HoldKey(webView, "A", 200);
+                await Task.Delay(200, token);
+
+                // 循环4次前进
+                for (int i = 0; i < 4; i++)
+                {
+                    await HoldKey(webView, "W", 1100);
+                    await Task.Delay(200, token);
+                }
+
+                // 下一列
+                await HoldKey(webView, "D", 1100);
+                await Task.Delay(200, token);
+                await HoldKey(webView, "S", 200);
+                await Task.Delay(200, token);
+
+                // 循环4次后退
+                for (int i = 0; i < 4; i++)
+                {
+                    await HoldKey(webView, "S", 1100);
+                    await Task.Delay(200, token);
+                }
+
+                // 去下一列
+                await HoldKey(webView, "D", 1100);
+                await Task.Delay(200, token);
+                await HoldKey(webView, "W", 450);
+                await Task.Delay(200, token);
+            }
+        }
+
 
         // 牧场操作脚本 - 增加点击次数参数
         private static async Task RanchOperation(WebView2 webView, CancellationToken token, int clickTimes = 12)
@@ -1533,7 +1603,8 @@ namespace ymzx
                     
                     // 执行偷农场操作
                     await Task.Delay(500);
-                    await FarmOperation(form1.webView2, stealingCts.Token, 4);
+                    // await FarmOperation(form1.webView2, stealingCts.Token, 4);
+                    await FarmCarOperation(form1.webView2, stealingCts.Token);//测试用
                 }
                 catch (TaskCanceledException) {
                     // 正常取消的异常，忽略
