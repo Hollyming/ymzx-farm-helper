@@ -41,7 +41,7 @@ namespace ymzx
             InitializeComponent();
             ControlActions.SetMainForm(this);  // 设置主窗体引用
             // 设置主窗体属性
-            this.Text = "ymzxhelper 3.9";
+            this.Text = "ymzxhelper 4.0";
             this.FormBorderStyle = FormBorderStyle.FixedSingle;
             this.MaximizeBox = false;
             this.ClientSize = new Size(960, 580);

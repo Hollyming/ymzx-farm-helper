@@ -53,6 +53,9 @@ namespace ymzx
         // 定时任务委托类型
         public delegate Task ScheduledTask(WebView2 webView, CancellationToken token);
 
+        // 保存上一次有月卡的循环时间（秒）
+        private static int lastLoopTimeSeconds = 90;
+
         // 添加在类的开头部分
         // private static float? _dpiScale = null;
 
@@ -111,7 +114,8 @@ namespace ymzx
                             settingsForm.ExecuteWorkshop,
                             settingsForm.ExecuteFishing,
                             settingsForm.FishingCount,
-                            settingsForm.RestTimeSeconds
+                            settingsForm.RestTimeSeconds,
+                            settingsForm.UseFarmCar
                         );
                     }
                     else
@@ -378,7 +382,8 @@ namespace ymzx
                                     settings.ExecuteWorkshop,
                                     settings.ExecuteFishing,
                                     settings.FishingCount,
-                                    settings.RestTimeSeconds
+                                    settings.RestTimeSeconds,
+                                    settings.UseFarmCar
                                 );
                             }
                             else
@@ -433,42 +438,117 @@ namespace ymzx
             return null;
         }
 
+        // 循环时间设置窗体
+        private class LoopTimeSettingsForm : Form
+        {
+            private TextBox txtLoopTime;
+            private Button btnConfirm;
+
+            public int LoopTimeSeconds { get; private set; }
+
+            public LoopTimeSettingsForm()
+            {
+                this.Text = "设置循环时间";
+                this.Size = new Size(300, 150);
+                this.FormBorderStyle = FormBorderStyle.FixedDialog;
+                this.MaximizeBox = false;
+                this.MinimizeBox = false;
+                this.StartPosition = FormStartPosition.CenterParent;
+
+                // 创建标签
+                Label lblPrompt = new Label();
+                lblPrompt.Text = "请输入循环时间（秒）：";
+                lblPrompt.Location = new Point(20, 20);
+                lblPrompt.Size = new Size(200, 20);
+                this.Controls.Add(lblPrompt);
+
+                // 创建输入框
+                txtLoopTime = new TextBox();
+                txtLoopTime.Location = new Point(20, 50);
+                txtLoopTime.Size = new Size(240, 20);
+                txtLoopTime.Text = lastLoopTimeSeconds.ToString(); // 使用上一次的循环时间
+                this.Controls.Add(txtLoopTime);
+
+                // 创建确认按钮
+                btnConfirm = new Button();
+                btnConfirm.Text = "确定";
+                btnConfirm.Location = new Point(100, 80);
+                btnConfirm.Size = new Size(80, 30);
+                btnConfirm.Click += BtnConfirm_Click;
+                this.Controls.Add(btnConfirm);
+            }
+
+            private void BtnConfirm_Click(object sender, EventArgs e)
+            {
+                if (int.TryParse(txtLoopTime.Text, out int time) && time > 0)
+                {
+                    LoopTimeSeconds = time;
+                    lastLoopTimeSeconds = time; // 保存新的循环时间
+                    this.DialogResult = DialogResult.OK;
+                    this.Close();
+                }
+                else
+                {
+                    MessageBox.Show("请输入有效的正数！", "错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+            }
+        }
+
         // 自动化循环操作（有月卡版本）
         private static async Task RunAutomationLoop(WebView2 webView, CancellationToken token)
         {
             try
             {
-                while (!token.IsCancellationRequested)
+                // 显示循环时间设置窗体
+                using (var settingsForm = new LoopTimeSettingsForm())
                 {
-                    // 新增步骤：激活网页（确保网页获得焦点）
-                    await ActivateWebPage(webView);
-                    await Task.Delay(100, token); // 添加短暂延迟确保页面激活
-
-                    // 步骤1：按下刷新按钮
-                    await ClickPoint(webView, RefreshButtonPoint);
-                    if (token.IsCancellationRequested) break;
-
-                    // 步骤2：按住 A 键 1.2 秒
-                    await HoldKey(webView, "A", 1200);
-                    if (token.IsCancellationRequested) break;
-                    await Task.Delay(200, token);
-
-                    // 步骤3：按下并释放 Q 键
-                    await PressKey(webView, "Q");
-                    if (token.IsCancellationRequested) break;
-                    await Task.Delay(200, token);
-
-                    // 步骤4：连续按下 10 次中心键，每次间隔 10 秒
-                    for (int i = 0; i < 10; i++)
+                    if (settingsForm.ShowDialog() != DialogResult.OK)
                     {
-                        await ClickPoint(webView, RejectFriendPullPoint);
-                        if (token.IsCancellationRequested) break;
-                        await Task.Delay(10000, token);
+                        return; // 用户取消设置
                     }
-                    if (token.IsCancellationRequested) break;
 
-                    // 步骤5：等待 50 秒
-                    await Task.Delay(50000, token);
+                    int loopTimeSeconds = settingsForm.LoopTimeSeconds;
+                    int remainingTime = loopTimeSeconds;
+
+                    while (!token.IsCancellationRequested)
+                    {
+                        // 步骤1-3：基础操作（约1.7秒）
+                        await ActivateWebPage(webView);
+                        await Task.Delay(100, token);
+
+                        // 步骤1：按下刷新按钮
+                        await ClickPoint(webView, RefreshButtonPoint);
+                        if (token.IsCancellationRequested) break;
+
+                        // 步骤2：按住 A 键 1.2 秒
+                        await HoldKey(webView, "A", 1200);
+                        if (token.IsCancellationRequested) break;
+                        await Task.Delay(200, token);
+
+                        // 步骤3：按下并释放 Q 键
+                        await PressKey(webView, "Q");
+                        if (token.IsCancellationRequested) break;
+                        await Task.Delay(200, token);
+
+                        // 等待剩余时间，每10秒点击一次拒绝拉取键
+                        while (remainingTime > 0 && !token.IsCancellationRequested)
+                        {
+                            if (remainingTime >= 10)
+                            {
+                                await ClickPoint(webView, RejectFriendPullPoint);
+                                await Task.Delay(10000, token);
+                                remainingTime -= 10;
+                            }
+                            else
+                            {
+                                await Task.Delay(remainingTime * 1000, token);
+                                remainingTime = 0;
+                            }
+                        }
+
+                        // 重置剩余时间
+                        remainingTime = loopTimeSeconds;
+                    }
                 }
             }
             catch (TaskCanceledException)
@@ -626,27 +706,27 @@ namespace ymzx
                 for (int i = 0; i < 4; i++)
                 {
                     await HoldKey(webView, "W", 1100);
-                    await Task.Delay(200, token);
+                    await Task.Delay(3600, token);
                 }
 
                 // 下一列
                 await HoldKey(webView, "D", 1100);
                 await Task.Delay(200, token);
                 await HoldKey(webView, "S", 200);
-                await Task.Delay(200, token);
+                await Task.Delay(3600, token);
 
                 // 循环4次后退
                 for (int i = 0; i < 4; i++)
                 {
                     await HoldKey(webView, "S", 1100);
-                    await Task.Delay(200, token);
+                    await Task.Delay(3600, token);
                 }
 
                 // 去下一列
                 await HoldKey(webView, "D", 1100);
                 await Task.Delay(200, token);
                 await HoldKey(webView, "W", 450);
-                await Task.Delay(200, token);
+                await Task.Delay(3600, token);
             }
         }
 
@@ -874,7 +954,7 @@ namespace ymzx
         }
 
         // 手动操作循环脚本
-        private static async Task RunManualLoop(WebView2 webView, CancellationToken token, int farmRanchTimes = 2, bool executeWorkshop = true, bool executeFishing = false, int fishingCount = 24, int restTimeSeconds = 0)
+        private static async Task RunManualLoop(WebView2 webView, CancellationToken token, int farmRanchTimes = 2, bool executeWorkshop = true, bool executeFishing = false, int fishingCount = 24, int restTimeSeconds = 0, bool useFarmCar = false)
         {
             try
             {
@@ -888,7 +968,15 @@ namespace ymzx
                     for (int i = 0; i < farmRanchTimes; i++)
                     {
                         if (token.IsCancellationRequested) break;
-                        await FarmOperation(webView, token);
+                        // 根据小车选项选择不同的农场操作
+                        if (useFarmCar)
+                        {
+                            await FarmCarOperation(webView, token);
+                        }
+                        else
+                        {
+                            await FarmOperation(webView, token);
+                        }
                         if (token.IsCancellationRequested) break;
                         await RanchOperation(webView, token);
                     }
@@ -1603,8 +1691,8 @@ namespace ymzx
                     
                     // 执行偷农场操作
                     await Task.Delay(500);
-                    // await FarmOperation(form1.webView2, stealingCts.Token, 4);
-                    await FarmCarOperation(form1.webView2, stealingCts.Token);//测试用
+                    await FarmOperation(form1.webView2, stealingCts.Token, 8);
+                    // await FarmCarOperation(form1.webView2, stealingCts.Token);//测试用
                 }
                 catch (TaskCanceledException) {
                     // 正常取消的异常，忽略
@@ -1655,7 +1743,7 @@ namespace ymzx
                     
                     // 执行偷牧场操作
                     await Task.Delay(500);
-                    await RanchOperation(form1.webView2, stealingCts.Token, 4);
+                    await RanchOperation(form1.webView2, stealingCts.Token, 8);
                 }
                 catch (TaskCanceledException) {
                     // 正常取消的异常，忽略

@@ -16,12 +16,14 @@ namespace ymzx
         private readonly string settingsFilePath;
         private ComboBox comboBoxRestTime;
         private Label labelRestTime;
+        private CheckBox checkBoxFarmCar;
 
         public int FarmRanchTimes { get; private set; } = 2;
         public bool ExecuteWorkshop { get; private set; } = true;
         public bool ExecuteFishing { get; private set; } = false;
         public int FishingCount { get; private set; } = 24;
         public int RestTimeSeconds { get; private set; } = 0;
+        public bool UseFarmCar { get; private set; } = false;
 
         public ManualLoopSettingsForm(int processId)
         {
@@ -82,6 +84,18 @@ namespace ymzx
             comboBoxFarmRanchTimes.Items.AddRange(new object[] { "0", "1", "2" });
             comboBoxFarmRanchTimes.SelectedIndex = 2;
             this.Controls.Add(comboBoxFarmRanchTimes);
+
+            currentY += baseControlHeight + baseSpacing;
+
+            // 添加小车选项
+            checkBoxFarmCar = new CheckBox
+            {
+                Text = "65级有小车",
+                Location = new System.Drawing.Point(baseSpacing, currentY),
+                Size = new System.Drawing.Size(baseControlWidth * 2, baseControlHeight),
+                Checked = false
+            };
+            this.Controls.Add(checkBoxFarmCar);
 
             currentY += baseControlHeight + baseSpacing;
 
@@ -204,6 +218,7 @@ namespace ymzx
                         checkBoxFishing.Checked = settings.ExecuteFishing;
                         numericUpDownFishingCount.Value = settings.FishingCount;
                         numericUpDownFishingCount.Enabled = settings.ExecuteFishing;
+                        checkBoxFarmCar.Checked = settings.UseFarmCar;
                         comboBoxRestTime.SelectedIndex = settings.RestTimeSeconds switch
                         {
                             0 => 0,    // 不休息
@@ -231,6 +246,7 @@ namespace ymzx
                     ExecuteWorkshop = checkBoxWorkshop.Checked,
                     ExecuteFishing = checkBoxFishing.Checked,
                     FishingCount = (int)numericUpDownFishingCount.Value,
+                    UseFarmCar = checkBoxFarmCar.Checked,
                     RestTimeSeconds = comboBoxRestTime.SelectedIndex switch
                     {
                         0 => 0,    // 不休息
@@ -267,6 +283,7 @@ namespace ymzx
             ExecuteWorkshop = checkBoxWorkshop.Checked;
             ExecuteFishing = checkBoxFishing.Checked;
             FishingCount = (int)numericUpDownFishingCount.Value;
+            UseFarmCar = checkBoxFarmCar.Checked;
             RestTimeSeconds = comboBoxRestTime.SelectedIndex switch
             {
                 0 => 0,    // 不休息
@@ -289,6 +306,7 @@ namespace ymzx
             public bool ExecuteFishing { get; set; }
             public int FishingCount { get; set; }
             public int RestTimeSeconds { get; set; }
+            public bool UseFarmCar { get; set; }
         }
     }
 } 
