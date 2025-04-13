@@ -478,7 +478,7 @@ namespace ymzx
         }
 
         // 农场操作脚本 - 增加点击次数参数
-        private static async Task FarmOperation(WebView2 webView, CancellationToken token, int clickTimes = 9)
+        private static async Task FarmOperation(WebView2 webView, CancellationToken token, int clickTimes = 18)
         {
             // 定期检查是否请求取消操作
             if (token.IsCancellationRequested) return;
@@ -582,7 +582,7 @@ namespace ymzx
         }
 
         // 牧场操作脚本 - 增加点击次数参数
-        private static async Task RanchOperation(WebView2 webView, CancellationToken token, int clickTimes = 6)
+        private static async Task RanchOperation(WebView2 webView, CancellationToken token, int clickTimes = 12)
         {
             // 定期检查是否请求取消操作
             if (token.IsCancellationRequested) return;
@@ -683,7 +683,7 @@ namespace ymzx
         }
 
         // 加工坊操作脚本
-        private static async Task WorkshopOperation(WebView2 webView, CancellationToken token, int clickTimes = 6)
+        private static async Task WorkshopOperation(WebView2 webView, CancellationToken token, int clickTimes = 12)
         {
             // 点击刷新按钮
             await ClickPoint(webView, RefreshButtonPoint);
@@ -902,8 +902,10 @@ namespace ymzx
 
             if (token.IsCancellationRequested) return;
             
-            // 按W键6.8秒（这一步是考虑碰撞标准稻草人的时间）
-            await HoldKey(webView, "W", 6800);
+            // 先按A左走一点，然后按W键6.8秒（左走为了避免碰撞稻草人）
+            await HoldKey(webView, "A", 250);
+            await Task.Delay(1000, token);
+            await HoldKey(webView, "W", 6000);
             await Task.Delay(1000, token);
 
             // 重复钓鱼指定次数
@@ -1291,7 +1293,7 @@ namespace ymzx
             {
                 if (token.IsCancellationRequested) break;
                 await ClickPoint(webView, UniversalButtonPoint);
-                await Task.Delay(500, token);
+                await Task.Delay(250, token);
             }
         }
 
