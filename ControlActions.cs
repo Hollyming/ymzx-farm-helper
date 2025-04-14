@@ -1064,10 +1064,10 @@ namespace ymzx
 
             if (token.IsCancellationRequested) return;
             
-            // 先按A左走一点，然后按W键6.8秒（左走为了避免碰撞稻草人）
+            // 先按A左走一点，然后按W键6.2秒（左走为了避免碰撞稻草人）
             await HoldKey(webView, "A", 250);
             await Task.Delay(1000, token);
-            await HoldKey(webView, "W", 6000);
+            await HoldKey(webView, "W", 6200);
             await Task.Delay(1000, token);
 
             // 重复钓鱼指定次数
