@@ -732,6 +732,7 @@ namespace ymzx
             //为了防止脚本，元梦之星发射器使用一段时间会发生方向初始化错位
             //会导致发射失败
             //因此采用去好友家再回来的策略刷新这种初始化错位问题
+            //此步骤会增加约20s时间
 
             /*去好友家再回来*/
             // 点击刷新
@@ -741,6 +742,20 @@ namespace ymzx
             // 点击社交按钮 (924,162)
             await ClickPoint(webView, new Point(924, 162));
             await Task.Delay(800, token);
+
+            // 点击下面输入昵称或uid (625,516)
+            await ClickPoint(webView, new Point(625, 516));
+            await Task.Delay(200, token);
+            
+            // 输入要去的玩家uid或昵称
+            await InputText(webView, "小红狐");
+            // 在按Enter之前增加足够的延迟确保输入框获得焦点并且内容已填入
+            await Task.Delay(1000, token);
+            
+            // 模拟按下enter键一次 - 使用更直接的方法
+            await DirectPressEnter(webView);
+            // 等待搜索结果显示
+            await Task.Delay(2000, token);
             
             // 点击拜访该玩家农场 (915,166)
             await ClickPoint(webView, new Point(915, 166));
