@@ -728,6 +728,33 @@ namespace ymzx
                 await HoldKey(webView, "W", 450);
                 await Task.Delay(3600, token);
             }
+
+            //为了防止脚本，元梦之星发射器使用一段时间会发生方向初始化错位
+            //会导致发射失败
+            //因此采用去好友家再回来的策略刷新这种初始化错位问题
+
+            /*去好友家再回来*/
+            // 点击刷新
+            await ClickPoint(webView, RefreshButtonPoint);
+            await Task.Delay(200, token);
+            
+            // 点击社交按钮 (924,162)
+            await ClickPoint(webView, new Point(924, 162));
+            await Task.Delay(800, token);
+            
+            // 点击拜访该玩家农场 (915,166)
+            await ClickPoint(webView, new Point(915, 166));
+            await Task.Delay(300, token);
+            await ClickPoint(webView, new Point(581, 346));//如果当前无人机正在运行，会有提示窗口，这个点击能去掉该窗口
+            await Task.Delay(8000, token);
+            
+            // 点击回家 (868,32)
+            await ClickPoint(webView, new Point(868, 32));
+            await Task.Delay(6000, token);
+            
+            // 点击刷新
+            await ClickPoint(webView, RefreshButtonPoint);
+            await Task.Delay(600, token);
         }
 
 
