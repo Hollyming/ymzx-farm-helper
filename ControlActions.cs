@@ -2028,5 +2028,15 @@ namespace ymzx
             }
         }
 
+        public static int GetLastLoopTimeSeconds()
+        {
+            return lastLoopTimeSeconds;
+        }
+
+        public static void SetLastLoopTimeSeconds(int seconds)
+        {
+            lastLoopTimeSeconds = seconds;
+        }
+
     }
 }

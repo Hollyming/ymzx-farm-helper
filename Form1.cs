@@ -36,12 +36,15 @@ namespace ymzx
         internal string AccountToSave { get; set; }
         internal bool NeedSaveAccount { get; set; }
 
+        // 添加当前账号名称属性
+        internal string CurrentAccountName { get; set; } = "";
+
         public Form1()
         {
             InitializeComponent();
             ControlActions.SetMainForm(this);  // 设置主窗体引用
             // 设置主窗体属性
-            this.Text = "ymzxhelper 4.1";
+            this.Text = "ymzxhelper 4.2";
             this.FormBorderStyle = FormBorderStyle.FixedSingle;
             this.MaximizeBox = false;
             this.ClientSize = new Size(960, 580);
@@ -284,10 +287,119 @@ namespace ymzx
             }
         }
 
-        private void Form1_FormClosed(object sender, FormClosedEventArgs e)
+        private async void Form1_FormClosed(object sender, FormClosedEventArgs e)
         {
             try
             {
+                // 如果当前有加载的账号，自动保存配置
+                if (!string.IsNullOrEmpty(CurrentAccountName))
+                {
+                    string accountPath = Path.Combine(
+                        AppDomain.CurrentDomain.BaseDirectory,
+                        "Accounts",
+                        CurrentAccountName
+                    );
+                    
+                    Debug.WriteLine($"自动保存账号配置: {CurrentAccountName}");
+                    
+                    // 创建账号信息
+                    var accountInfo = new AccountInfo
+                    {
+                        Name = CurrentAccountName,
+                        WebView2Path = CurrentUserDataFolder,
+                        NoMonthlyCard = checkBoxNoMonthlyCard.Checked,
+                        LoopTimeSeconds = ControlActions.GetLastLoopTimeSeconds(),
+                        ManualSettings = ManualLoopSettingsForm.LoadManualSettings(Process.GetCurrentProcess().Id),
+                        ScheduledTasksSettings = new ScheduledTasksSettings
+                        {
+                            FishTankEnabled = ControlActions.GetScheduledTask("FishTank")?.IsEnabled ?? false,
+                            FishTankHour = ControlActions.GetScheduledTask("FishTank")?.ExecutionHour ?? 0,
+                            FishTankMinute = ControlActions.GetScheduledTask("FishTank")?.ExecutionMinute ?? 0,
+                            
+                            FishingEnabled = ControlActions.GetScheduledTask("Fishing")?.IsEnabled ?? false,
+                            FishingHour = ControlActions.GetScheduledTask("Fishing")?.ExecutionHour ?? 0,
+                            FishingMinute = ControlActions.GetScheduledTask("Fishing")?.ExecutionMinute ?? 0,
+                            FishingPlayer = ControlActions.GetScheduledTask("Fishing")?.ExtraParam ?? "",
+                            
+                            HotSpringEnabled = ControlActions.GetScheduledTask("HotSpring")?.IsEnabled ?? false,
+                            HotSpringHour = ControlActions.GetScheduledTask("HotSpring")?.ExecutionHour ?? 0,
+                            HotSpringMinute = ControlActions.GetScheduledTask("HotSpring")?.ExecutionMinute ?? 0,
+                            HotSpringPlayer = ControlActions.GetScheduledTask("HotSpring")?.ExtraParam ?? ""
+                        }
+                    };
+
+                    // 确保账号目录存在
+                    if (!Directory.Exists(accountPath))
+                    {
+                        Directory.CreateDirectory(accountPath);
+                        Debug.WriteLine($"创建账号目录: {accountPath}");
+                    }
+
+                    // 保存账号信息
+                    string accountInfoPath = Path.Combine(accountPath, "account_info.json");
+                    string accountInfoJson = JsonSerializer.Serialize(accountInfo, new JsonSerializerOptions { WriteIndented = true });
+                    File.WriteAllText(accountInfoPath, accountInfoJson);
+                    Debug.WriteLine($"保存账号信息到: {accountInfoPath}");
+
+                    // 保存 cookies 和 localStorage
+                    if (webView2 != null && webView2.CoreWebView2 != null)
+                    {
+                        try
+                        {
+                            // 使用 Task.WhenAll 并行执行异步操作
+                            var cookiesTask = webView2.CoreWebView2.CookieManager.GetCookiesAsync("https://gamer.qq.com");
+                            var localStorageTask = webView2.CoreWebView2.ExecuteScriptAsync("JSON.stringify(Object.entries(localStorage))");
+                            
+                            await Task.WhenAll(cookiesTask, localStorageTask);
+                            
+                            // 保存 cookies
+                            var cookies = cookiesTask.Result;
+                            var cookiesJson = JsonSerializer.Serialize(cookies.Select(c => new
+                            {
+                                c.Name,
+                                c.Value,
+                                c.Domain,
+                                c.Path,
+                                IsSecure = c.IsSecure,
+                                IsHttpOnly = c.IsHttpOnly,
+                                c.SameSite,
+                                Expires = c.Expires.ToString("O")
+                            }));
+                            File.WriteAllText(Path.Combine(accountPath, "cookies.json"), cookiesJson);
+
+                            // 保存 localStorage
+                            var localStorageJson = localStorageTask.Result;
+                            File.WriteAllText(Path.Combine(accountPath, "localStorage.json"), localStorageJson);
+                        }
+                        catch (Exception ex)
+                        {
+                            Debug.WriteLine($"保存 cookies 或 localStorage 时出错: {ex.Message}");
+                            // 继续执行，不中断保存流程
+                        }
+                    }
+
+                    // 复制用户数据目录
+                    if (!string.IsNullOrEmpty(CurrentUserDataFolder))
+                    {
+                        try
+                        {
+                            var userDataPath = Path.Combine(accountPath, "UserData");
+                            if (Directory.Exists(userDataPath))
+                            {
+                                Directory.Delete(userDataPath, true);
+                            }
+                            CopyDirectory(CurrentUserDataFolder, userDataPath);
+                        }
+                        catch (Exception ex)
+                        {
+                            Debug.WriteLine($"复制用户数据目录时出错: {ex.Message}");
+                            // 继续执行，不中断保存流程
+                        }
+                    }
+
+                    Debug.WriteLine($"账号 {CurrentAccountName} 的配置已自动保存");
+                }
+
                 // 读取已保存的账号列表
                 string accountsConfigPath = Path.Combine(
                     AppDomain.CurrentDomain.BaseDirectory,
@@ -338,62 +450,19 @@ namespace ymzx
                 // 关闭 WebView2
                 if (webView2 != null)
                 {
-                    webView2.Dispose();
+                    try
+                    {
+                        webView2.Dispose();
+                    }
+                    catch (Exception ex)
+                    {
+                        Debug.WriteLine($"关闭 WebView2 时出错: {ex.Message}");
+                    }
                 }
             }
             catch (Exception ex)
             {
                 Debug.WriteLine($"清理资源时出错: {ex.Message}");
-            }
-        }
-
-        private async void SaveAccount(string accountName)
-        {
-            try
-            {
-                string accountsDirectory = Path.Combine(
-                    AppDomain.CurrentDomain.BaseDirectory,
-                    "Accounts"
-                );
-                string accountPath = Path.Combine(accountsDirectory, accountName);
-                
-                // 创建账号目录
-                Directory.CreateDirectory(accountPath);
-
-                // 保存 cookies
-                var cookies = await webView2.CoreWebView2.CookieManager.GetCookiesAsync("https://gamer.qq.com");
-                var cookiesJson = JsonSerializer.Serialize(cookies.Select(c => new
-                {
-                    c.Name,
-                    c.Value,
-                    c.Domain,
-                    c.Path,
-                    IsSecure = c.IsSecure,
-                    IsHttpOnly = c.IsHttpOnly,
-                    c.SameSite,
-                    Expires = c.Expires.ToString("O")
-                }));
-                File.WriteAllText(Path.Combine(accountPath, "cookies.json"), cookiesJson);
-
-                // 保存 localStorage
-                var localStorageJson = await webView2.CoreWebView2.ExecuteScriptAsync(
-                    "JSON.stringify(Object.entries(localStorage))");
-                File.WriteAllText(Path.Combine(accountPath, "localStorage.json"), localStorageJson);
-
-                // 复制用户数据目录
-                if (!string.IsNullOrEmpty(CurrentUserDataFolder))
-                {
-                    var userDataPath = Path.Combine(accountPath, "UserData");
-                    if (Directory.Exists(userDataPath))
-                    {
-                        Directory.Delete(userDataPath, true);
-                    }
-                    CopyDirectory(CurrentUserDataFolder, userDataPath);
-                }
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"保存账号时出错: {ex.Message}");
             }
         }
 

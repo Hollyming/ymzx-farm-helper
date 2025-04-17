@@ -308,5 +308,29 @@ namespace ymzx
             public int RestTimeSeconds { get; set; }
             public bool UseFarmCar { get; set; }
         }
+
+        public static ManualSettings LoadManualSettings(int processId)
+        {
+            string settingsFilePath = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                "YmzxHelper",
+                $"manual_settings_{processId}.json"
+            );
+            
+            try
+            {
+                if (File.Exists(settingsFilePath))
+                {
+                    string jsonString = File.ReadAllText(settingsFilePath);
+                    return JsonSerializer.Deserialize<ManualSettings>(jsonString);
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"加载手动设置失败: {ex.Message}");
+            }
+            
+            return new ManualSettings();
+        }
     }
 } 

@@ -14,6 +14,28 @@ namespace ymzx
     {
         public string Name { get; set; }
         public string WebView2Path { get; set; }
+        public bool NoMonthlyCard { get; set; }
+        public int LoopTimeSeconds { get; set; }
+        public ManualLoopSettingsForm.ManualSettings ManualSettings { get; set; }
+        public ScheduledTasksSettings ScheduledTasksSettings { get; set; }
+    }
+
+    // 添加定时任务设置类
+    internal class ScheduledTasksSettings
+    {
+        public bool FishTankEnabled { get; set; }
+        public int FishTankHour { get; set; }
+        public int FishTankMinute { get; set; }
+        
+        public bool FishingEnabled { get; set; }
+        public int FishingHour { get; set; }
+        public int FishingMinute { get; set; }
+        public string FishingPlayer { get; set; }
+        
+        public bool HotSpringEnabled { get; set; }
+        public int HotSpringHour { get; set; }
+        public int HotSpringMinute { get; set; }
+        public string HotSpringPlayer { get; set; }
     }
 
     internal class AccountManagerForm : Form
@@ -104,11 +126,15 @@ namespace ymzx
             accountInfos.Clear();
 
             string configPath = Path.Combine(accountsDirectory, "accounts.json");
+            Debug.WriteLine($"尝试从路径加载账号列表: {configPath}");
+            
             if (File.Exists(configPath))
             {
                 try
                 {
                     string json = File.ReadAllText(configPath);
+                    Debug.WriteLine($"读取到的账号列表: {json}");
+                    
                     var accounts = JsonSerializer.Deserialize<List<AccountInfo>>(json);
                     foreach (var account in accounts)
                     {
@@ -118,12 +144,20 @@ namespace ymzx
                             accountInfos[account.Name] = account;
                             accountList.Items.Add(account.Name);
                         }
+                        else
+                        {
+                            Debug.WriteLine($"账号 {account.Name} 的WebView2目录不存在: {account.WebView2Path}");
+                        }
                     }
                 }
                 catch (Exception ex)
                 {
-                    Debug.WriteLine($"加载账号配置失败: {ex.Message}");
+                    Debug.WriteLine($"加载账号列表失败: {ex.Message}\n{ex.StackTrace}");
                 }
+            }
+            else
+            {
+                Debug.WriteLine("账号列表文件不存在");
             }
         }
 
@@ -135,10 +169,11 @@ namespace ymzx
                 var accounts = accountInfos.Values.ToList();
                 string json = JsonSerializer.Serialize(accounts, new JsonSerializerOptions { WriteIndented = true });
                 File.WriteAllText(configPath, json);
+                Debug.WriteLine($"保存账号列表到: {configPath}");
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"保存账号配置失败: {ex.Message}");
+                Debug.WriteLine($"保存账号列表失败: {ex.Message}\n{ex.StackTrace}");
             }
         }
 
@@ -153,6 +188,9 @@ namespace ymzx
             try
             {
                 string accountName = accountNameInput.Text.Trim();
+                string accountPath = Path.Combine(accountsDirectory, accountName);
+                
+                Debug.WriteLine($"尝试保存账号到路径: {accountPath}");
                 
                 // 检查账号是否已存在
                 if (accountInfos.ContainsKey(accountName))
@@ -167,12 +205,48 @@ namespace ymzx
                 var accountInfo = new AccountInfo
                 {
                     Name = accountName,
-                    WebView2Path = mainForm.CurrentUserDataFolder
+                    WebView2Path = mainForm.CurrentUserDataFolder,
+                    NoMonthlyCard = mainForm.checkBoxNoMonthlyCard.Checked,
+                    LoopTimeSeconds = ControlActions.GetLastLoopTimeSeconds(),
+                    ManualSettings = ManualLoopSettingsForm.LoadManualSettings(Process.GetCurrentProcess().Id),
+                    ScheduledTasksSettings = new ScheduledTasksSettings
+                    {
+                        FishTankEnabled = ControlActions.GetScheduledTask("FishTank")?.IsEnabled ?? false,
+                        FishTankHour = ControlActions.GetScheduledTask("FishTank")?.ExecutionHour ?? 0,
+                        FishTankMinute = ControlActions.GetScheduledTask("FishTank")?.ExecutionMinute ?? 0,
+                        
+                        FishingEnabled = ControlActions.GetScheduledTask("Fishing")?.IsEnabled ?? false,
+                        FishingHour = ControlActions.GetScheduledTask("Fishing")?.ExecutionHour ?? 0,
+                        FishingMinute = ControlActions.GetScheduledTask("Fishing")?.ExecutionMinute ?? 0,
+                        FishingPlayer = ControlActions.GetScheduledTask("Fishing")?.ExtraParam ?? "",
+                        
+                        HotSpringEnabled = ControlActions.GetScheduledTask("HotSpring")?.IsEnabled ?? false,
+                        HotSpringHour = ControlActions.GetScheduledTask("HotSpring")?.ExecutionHour ?? 0,
+                        HotSpringMinute = ControlActions.GetScheduledTask("HotSpring")?.ExecutionMinute ?? 0,
+                        HotSpringPlayer = ControlActions.GetScheduledTask("HotSpring")?.ExtraParam ?? ""
+                    }
                 };
 
-                // 更新账号信息
+                // 确保账号目录存在
+                if (!Directory.Exists(accountPath))
+                {
+                    Directory.CreateDirectory(accountPath);
+                    Debug.WriteLine($"创建账号目录: {accountPath}");
+                }
+
+                // 保存账号信息
+                string accountInfoPath = Path.Combine(accountPath, "account_info.json");
+                string accountInfoJson = JsonSerializer.Serialize(accountInfo, new JsonSerializerOptions { WriteIndented = true });
+                File.WriteAllText(accountInfoPath, accountInfoJson);
+                Debug.WriteLine($"保存账号信息到: {accountInfoPath}");
+
+                // 更新账号信息字典
                 accountInfos[accountName] = accountInfo;
                 SaveAccountsList();
+
+                // 更新当前账号状态
+                mainForm.CurrentAccountName = accountName;
+                lblCurrentAccount.Text = $"当前账号：{accountName}";
 
                 // 刷新列表
                 LoadAccountsList();
@@ -180,6 +254,7 @@ namespace ymzx
             }
             catch (Exception ex)
             {
+                Debug.WriteLine($"保存账号时出错: {ex.Message}\n{ex.StackTrace}");
                 MessageBox.Show($"保存账号失败: {ex.Message}", "错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
@@ -195,30 +270,99 @@ namespace ymzx
             try
             {
                 string accountName = accountList.SelectedItem.ToString();
-                if (!accountInfos.TryGetValue(accountName, out var accountInfo))
+                string accountPath = Path.Combine(accountsDirectory, accountName);
+                string accountInfoPath = Path.Combine(accountPath, "account_info.json");
+                
+                Debug.WriteLine($"尝试从路径加载账号: {accountInfoPath}");
+                
+                if (!Directory.Exists(accountPath))
                 {
+                    Debug.WriteLine($"账号目录不存在: {accountPath}");
+                    MessageBox.Show("账号目录不存在！", "错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
+                }
+                
+                if (!File.Exists(accountInfoPath))
+                {
+                    Debug.WriteLine($"账号信息文件不存在: {accountInfoPath}");
                     MessageBox.Show("账号信息不存在！", "错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     return;
                 }
-
-                if (!Directory.Exists(accountInfo.WebView2Path))
+                
+                // 读取账号信息
+                string accountInfoJson = File.ReadAllText(accountInfoPath);
+                Debug.WriteLine($"读取到的账号信息: {accountInfoJson}");
+                
+                var accountInfo = JsonSerializer.Deserialize<AccountInfo>(accountInfoJson);
+                
+                if (accountInfo == null)
                 {
-                    MessageBox.Show("账号数据不存在！", "错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    // 从列表中移除无效账号
-                    accountInfos.Remove(accountName);
-                    SaveAccountsList();
-                    LoadAccountsList();
+                    Debug.WriteLine("账号信息反序列化失败");
+                    MessageBox.Show("账号信息格式错误！", "错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     return;
                 }
-
+                
                 // 切换到保存的用户数据目录
                 await mainForm.SwitchUserDataFolder(accountInfo.WebView2Path);
-
+                
+                // 加载脚本设置
+                mainForm.checkBoxNoMonthlyCard.Checked = accountInfo.NoMonthlyCard;
+                ControlActions.SetLastLoopTimeSeconds(accountInfo.LoopTimeSeconds);
+                
+                // 加载手动设置
+                if (accountInfo.ManualSettings != null)
+                {
+                    string settingsFilePath = Path.Combine(
+                        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                        "YmzxHelper",
+                        $"manual_settings_{Process.GetCurrentProcess().Id}.json"
+                    );
+                    
+                    string settingsJson = JsonSerializer.Serialize(accountInfo.ManualSettings);
+                    File.WriteAllText(settingsFilePath, settingsJson);
+                    Debug.WriteLine($"保存手动设置到: {settingsFilePath}");
+                }
+                
+                // 加载定时任务设置
+                if (accountInfo.ScheduledTasksSettings != null)
+                {
+                    var settings = accountInfo.ScheduledTasksSettings;
+                    
+                    var fishTankTask = ControlActions.GetScheduledTask("FishTank");
+                    if (fishTankTask != null)
+                    {
+                        fishTankTask.IsEnabled = settings.FishTankEnabled;
+                        fishTankTask.ExecutionHour = settings.FishTankHour;
+                        fishTankTask.ExecutionMinute = settings.FishTankMinute;
+                    }
+                    
+                    var fishingTask = ControlActions.GetScheduledTask("Fishing");
+                    if (fishingTask != null)
+                    {
+                        fishingTask.IsEnabled = settings.FishingEnabled;
+                        fishingTask.ExecutionHour = settings.FishingHour;
+                        fishingTask.ExecutionMinute = settings.FishingMinute;
+                        fishingTask.ExtraParam = settings.FishingPlayer;
+                    }
+                    
+                    var hotSpringTask = ControlActions.GetScheduledTask("HotSpring");
+                    if (hotSpringTask != null)
+                    {
+                        hotSpringTask.IsEnabled = settings.HotSpringEnabled;
+                        hotSpringTask.ExecutionHour = settings.HotSpringHour;
+                        hotSpringTask.ExecutionMinute = settings.HotSpringMinute;
+                        hotSpringTask.ExtraParam = settings.HotSpringPlayer;
+                    }
+                }
+                
+                // 更新当前账号状态
+                mainForm.CurrentAccountName = accountName;
                 lblCurrentAccount.Text = $"当前账号：{accountName}";
                 MessageBox.Show("账号加载成功！", "提示", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
             catch (Exception ex)
             {
+                Debug.WriteLine($"加载账号时出错: {ex.Message}\n{ex.StackTrace}");
                 MessageBox.Show($"加载账号失败: {ex.Message}", "错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
