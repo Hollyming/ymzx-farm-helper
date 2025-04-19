@@ -443,39 +443,64 @@ namespace ymzx
         {
             private TextBox txtLoopTime;
             private Button btnConfirm;
+            private Label lblPrompt;
 
             public int LoopTimeSeconds { get; private set; }
 
             public LoopTimeSettingsForm()
             {
+                // 设置DPI缩放模式
+                this.AutoScaleMode = AutoScaleMode.Dpi;
+                this.AutoScaleDimensions = new System.Drawing.SizeF(96F, 96F);
+                
                 this.Text = "设置循环时间";
-                this.Size = new Size(300, 150);
                 this.FormBorderStyle = FormBorderStyle.FixedDialog;
                 this.MaximizeBox = false;
                 this.MinimizeBox = false;
                 this.StartPosition = FormStartPosition.CenterParent;
 
+                // 获取系统DPI缩放比例
+                float dpiScale;
+                using (var graphics = this.CreateGraphics())
+                {
+                    dpiScale = graphics.DpiX / 96.0f;
+                }
+
+                // 根据DPI缩放调整控件大小和位置
+                int baseSpacing = (int)(8 * dpiScale);
+                int baseControlHeight = (int)(25 * dpiScale);
+                int baseControlWidth = (int)(240 * dpiScale);
+                int currentY = baseSpacing;
+
                 // 创建标签
-                Label lblPrompt = new Label();
+                lblPrompt = new Label();
                 lblPrompt.Text = "请输入循环时间（秒）：";
-                lblPrompt.Location = new Point(20, 20);
-                lblPrompt.Size = new Size(200, 20);
+                lblPrompt.Location = new Point(baseSpacing, currentY);
+                lblPrompt.Size = new Size(baseControlWidth, baseControlHeight);
+                lblPrompt.TextAlign = ContentAlignment.MiddleLeft;
                 this.Controls.Add(lblPrompt);
+
+                currentY += baseControlHeight + baseSpacing;
 
                 // 创建输入框
                 txtLoopTime = new TextBox();
-                txtLoopTime.Location = new Point(20, 50);
-                txtLoopTime.Size = new Size(240, 20);
+                txtLoopTime.Location = new Point(baseSpacing, currentY);
+                txtLoopTime.Size = new Size(baseControlWidth, baseControlHeight);
                 txtLoopTime.Text = lastLoopTimeSeconds.ToString(); // 使用上一次的循环时间
                 this.Controls.Add(txtLoopTime);
+
+                currentY += baseControlHeight + baseSpacing * 2;
 
                 // 创建确认按钮
                 btnConfirm = new Button();
                 btnConfirm.Text = "确定";
-                btnConfirm.Location = new Point(100, 80);
-                btnConfirm.Size = new Size(80, 30);
+                btnConfirm.Location = new Point(baseSpacing, currentY);
+                btnConfirm.Size = new Size(baseControlWidth, baseControlHeight);
                 btnConfirm.Click += BtnConfirm_Click;
                 this.Controls.Add(btnConfirm);
+
+                // 设置窗体大小
+                this.ClientSize = new Size(baseControlWidth + baseSpacing * 2, currentY + baseControlHeight + baseSpacing);
             }
 
             private void BtnConfirm_Click(object sender, EventArgs e)
@@ -1885,20 +1910,37 @@ namespace ymzx
             Form settingsOptionsForm = new Form()
             {
                 Text = "一键设置选项",
-                Size = new Size(200, 150),
                 FormBorderStyle = FormBorderStyle.FixedDialog,
                 StartPosition = FormStartPosition.CenterParent,
                 MaximizeBox = false,
-                MinimizeBox = false
+                MinimizeBox = false,
+                // 添加DPI缩放支持
+                AutoScaleMode = AutoScaleMode.Dpi,
+                AutoScaleDimensions = new System.Drawing.SizeF(96F, 96F)
             };
+
+            // 获取系统DPI缩放比例
+            float dpiScale;
+            using (var graphics = settingsOptionsForm.CreateGraphics())
+            {
+                dpiScale = graphics.DpiX / 96.0f;
+            }
+
+            // 根据DPI缩放调整控件大小和位置
+            int baseSpacing = (int)(5 * dpiScale); // 减小基础间距
+            int baseControlHeight = (int)(23 * dpiScale); // 减小控件高度
+            int baseControlWidth = (int)(120 * dpiScale); // 减小控件宽度
+            int buttonSpacing = (int)(3 * dpiScale); // 减小按钮间距
+            int currentY = baseSpacing;
 
             // 添加"登录界面"按钮
             Button btnLoginSettings = new Button()
             {
                 Text = "登录界面",
-                Size = new Size(160, 30),
-                Location = new Point(15, 10),
-                FlatStyle = FlatStyle.Flat
+                Size = new Size(baseControlWidth, baseControlHeight),
+                Location = new Point(baseSpacing, currentY),
+                FlatStyle = FlatStyle.Flat,
+                Font = new Font("Microsoft YaHei UI", 9f / (dpiScale > 1.0f ? dpiScale : 1.0f), FontStyle.Regular)
             };
             btnLoginSettings.FlatAppearance.BorderSize = 0;
             btnLoginSettings.FlatAppearance.MouseOverBackColor = Color.LightBlue;
@@ -1917,13 +1959,16 @@ namespace ymzx
             };
             settingsOptionsForm.Controls.Add(btnLoginSettings);
 
+            currentY += baseControlHeight + buttonSpacing;
+
             // 添加"农场界面"按钮
             Button btnFarmSettings = new Button()
             {
                 Text = "农场界面",
-                Size = new Size(160, 30),
-                Location = new Point(15, 50),
-                FlatStyle = FlatStyle.Flat
+                Size = new Size(baseControlWidth, baseControlHeight),
+                Location = new Point(baseSpacing, currentY),
+                FlatStyle = FlatStyle.Flat,
+                Font = new Font("Microsoft YaHei UI", 9f / (dpiScale > 1.0f ? dpiScale : 1.0f), FontStyle.Regular)
             };
             btnFarmSettings.FlatAppearance.BorderSize = 0;
             btnFarmSettings.FlatAppearance.MouseOverBackColor = Color.LightBlue;
@@ -1968,6 +2013,12 @@ namespace ymzx
                 }
             };
             settingsOptionsForm.Controls.Add(btnFarmSettings);
+
+            // 设置窗体大小，减少额外空白
+            settingsOptionsForm.ClientSize = new Size(
+                baseControlWidth + baseSpacing * 2,
+                currentY + baseControlHeight + baseSpacing
+            );
 
             settingsOptionsForm.ShowDialog();
         }

@@ -41,10 +41,14 @@ namespace ymzx
 
         public Form1()
         {
+            // 设置DPI缩放模式
+            this.AutoScaleMode = AutoScaleMode.Dpi;
+            this.AutoScaleDimensions = new System.Drawing.SizeF(96F, 96F);
+            
             InitializeComponent();
             ControlActions.SetMainForm(this);  // 设置主窗体引用
             // 设置主窗体属性
-            this.Text = "ymzxhelper 4.2";
+            this.Text = "ymzxhelper 4.3";
             this.FormBorderStyle = FormBorderStyle.FixedSingle;
             this.MaximizeBox = false;
             this.ClientSize = new Size(960, 580);
@@ -96,18 +100,31 @@ namespace ymzx
 
         private void InitializeControls()
         {
-            // 第一行区域：按钮和GPU选项
-            int buttonWidth = 100;
-            int buttonHeight = 30;
-            int spacing = 5;
+            // 获取系统DPI缩放比例
+            float dpiScale;
+            using (var graphics = this.CreateGraphics())
+            {
+                dpiScale = graphics.DpiX / 96.0f;
+            }
+
+            // 根据DPI缩放调整控件大小和位置
+            int buttonWidth = 100; // 固定按钮宽度
+            int buttonHeight = 30; // 固定按钮高度
+            int spacing = 5; // 固定间距
             int startX = spacing;
             int startY = spacing;
+
+            // 创建缩小的字体
+            float baseFontSize = 9f; // 基础字体大小
+            float scaledFontSize = baseFontSize / (dpiScale > 1.0f ? dpiScale : 1.0f);
+            Font scaledFont = new Font("Microsoft YaHei UI", scaledFontSize, FontStyle.Regular);
 
             // "开始/停止"按钮
             btnStartStop = new Button();
             btnStartStop.Text = "开始/停止";
             btnStartStop.Size = new Size(buttonWidth, buttonHeight);
             btnStartStop.Location = new Point(startX, startY);
+            btnStartStop.Font = scaledFont;
             btnStartStop.FlatStyle = FlatStyle.Flat;
             btnStartStop.FlatAppearance.BorderSize = 0;
             btnStartStop.FlatAppearance.MouseOverBackColor = Color.LightBlue;
@@ -119,17 +136,19 @@ namespace ymzx
             btnRefresh.Text = "刷新";
             btnRefresh.Size = new Size(buttonWidth, buttonHeight);
             btnRefresh.Location = new Point(startX + (buttonWidth + spacing) * 1, startY);
+            btnRefresh.Font = scaledFont;
             btnRefresh.FlatStyle = FlatStyle.Flat;
             btnRefresh.FlatAppearance.BorderSize = 0;
             btnRefresh.FlatAppearance.MouseOverBackColor = Color.LightBlue;
             btnRefresh.Click += ControlActions.BtnRefresh_Click;
             this.Controls.Add(btnRefresh);
 
-            // "清理缓存"按钮 (原"版本更新"按钮)
+            // "清理缓存"按钮
             btnClearCache = new Button();
             btnClearCache.Text = "清理缓存";
             btnClearCache.Size = new Size(buttonWidth, buttonHeight);
             btnClearCache.Location = new Point(startX + (buttonWidth + spacing) * 2, startY);
+            btnClearCache.Font = scaledFont;
             btnClearCache.FlatStyle = FlatStyle.Flat;
             btnClearCache.FlatAppearance.BorderSize = 0;
             btnClearCache.FlatAppearance.MouseOverBackColor = Color.LightBlue;
@@ -141,6 +160,7 @@ namespace ymzx
             btnFarmGuide.Text = "偷菜";
             btnFarmGuide.Size = new Size(buttonWidth, buttonHeight);
             btnFarmGuide.Location = new Point(startX + (buttonWidth + spacing) * 3, startY);
+            btnFarmGuide.Font = scaledFont;
             btnFarmGuide.FlatStyle = FlatStyle.Flat;
             btnFarmGuide.FlatAppearance.BorderSize = 0;
             btnFarmGuide.FlatAppearance.MouseOverBackColor = Color.LightBlue;
@@ -152,17 +172,19 @@ namespace ymzx
             btnScheduledTasks.Text = "定时任务";
             btnScheduledTasks.Size = new Size(buttonWidth, buttonHeight);
             btnScheduledTasks.Location = new Point(startX + (buttonWidth + spacing) * 4, startY);
+            btnScheduledTasks.Font = scaledFont;
             btnScheduledTasks.FlatStyle = FlatStyle.Flat;
             btnScheduledTasks.FlatAppearance.BorderSize = 0;
             btnScheduledTasks.FlatAppearance.MouseOverBackColor = Color.LightBlue;
             btnScheduledTasks.Click += new System.EventHandler(ControlActions.BtnScheduledTasks_Click);
             this.Controls.Add(btnScheduledTasks);
 
-            // "Github"按钮改为"一键设置"按钮
+            // "一键设置"按钮
             btnGithub = new Button();
             btnGithub.Text = "一键设置";
             btnGithub.Size = new Size(buttonWidth, buttonHeight);
             btnGithub.Location = new Point(startX + (buttonWidth + spacing) * 5, startY);
+            btnGithub.Font = scaledFont;
             btnGithub.FlatStyle = FlatStyle.Flat;
             btnGithub.FlatAppearance.BorderSize = 0;
             btnGithub.FlatAppearance.MouseOverBackColor = Color.LightBlue;
@@ -174,35 +196,42 @@ namespace ymzx
             btnAccountManager.Text = "账号管理";
             btnAccountManager.Size = new Size(buttonWidth, buttonHeight);
             btnAccountManager.Location = new Point(startX + (buttonWidth + spacing) * 6, startY);
+            btnAccountManager.Font = scaledFont;
             btnAccountManager.FlatStyle = FlatStyle.Flat;
             btnAccountManager.FlatAppearance.BorderSize = 0;
             btnAccountManager.FlatAppearance.MouseOverBackColor = Color.LightBlue;
             btnAccountManager.Click += BtnAccountManager_Click;
             this.Controls.Add(btnAccountManager);
 
+            // 计算新的位置
+            int rightEdge = this.ClientSize.Width - spacing;
+
             // 最右边添加 GPU 启用选项和无月卡版本选项
             checkBoxGPU = new CheckBox();
             checkBoxGPU.Text = "启用GPU";
-            checkBoxGPU.Checked = true; // 固定为启用GPU
-            checkBoxGPU.Enabled = true; // 允许用户更改GPU设置
-            checkBoxGPU.Size = new Size(100, buttonHeight);
-            // 放置在倒数第二个位置
-            checkBoxGPU.Location = new Point(this.ClientSize.Width - 200 - spacing, startY);
+            checkBoxGPU.Checked = true;// 固定为启用GPU
+            checkBoxGPU.Enabled = true;// 允许用户更改GPU设置
+            checkBoxGPU.Size = new Size(80, buttonHeight); // 减小勾选框宽度
+            checkBoxGPU.Font = scaledFont;
+            checkBoxGPU.AutoSize = true; // 启用自动大小
+            checkBoxGPU.Location = new Point(rightEdge - 160, startY + (buttonHeight - checkBoxGPU.Height) / 2); // 垂直居中
             this.Controls.Add(checkBoxGPU);
 
             // 添加无月卡版本复选框
             checkBoxNoMonthlyCard = new CheckBox();
             checkBoxNoMonthlyCard.Text = "无月卡版本";
-            checkBoxNoMonthlyCard.Checked = false; // 默认不启用
-            checkBoxNoMonthlyCard.Size = new Size(100, buttonHeight);
-            // 放置在最右边
-            checkBoxNoMonthlyCard.Location = new Point(this.ClientSize.Width - 100 - spacing, startY);
+            checkBoxNoMonthlyCard.Checked = false;// 默认不启用
+            checkBoxNoMonthlyCard.Size = new Size(80, buttonHeight); // 减小勾选框宽度
+            checkBoxNoMonthlyCard.Font = scaledFont;
+            checkBoxNoMonthlyCard.AutoSize = true; // 启用自动大小
+            checkBoxNoMonthlyCard.Location = new Point(rightEdge - 80, startY + (buttonHeight - checkBoxNoMonthlyCard.Height) / 2); // 垂直居中
             this.Controls.Add(checkBoxNoMonthlyCard);
 
-            // 第二行区域：WebView2 控件，无边框，位置紧贴第一行下方
+            // WebView2 控件
             webView2 = new WebView2();
             webView2.Location = new Point(0, buttonHeight + 2 * spacing);
-            webView2.Size = new Size(960, 540);
+            int webViewHeight = this.ClientSize.Height - (buttonHeight + 2 * spacing);
+            webView2.Size = new Size(this.ClientSize.Width, webViewHeight);
             this.Controls.Add(webView2);
         }
 

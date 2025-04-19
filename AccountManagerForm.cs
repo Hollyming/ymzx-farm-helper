@@ -52,6 +52,10 @@ namespace ymzx
 
         public AccountManagerForm(Form1 mainForm)
         {
+            // 设置DPI缩放模式
+            this.AutoScaleMode = AutoScaleMode.Dpi;
+            this.AutoScaleDimensions = new System.Drawing.SizeF(96F, 96F);
+            
             this.mainForm = mainForm;
             this.accountInfos = new Dictionary<string, AccountInfo>();
             InitializeComponents();
@@ -60,8 +64,24 @@ namespace ymzx
 
         private void InitializeComponents()
         {
+            // 获取系统DPI缩放比例
+            float dpiScale;
+            using (var graphics = this.CreateGraphics())
+            {
+                dpiScale = graphics.DpiX / 96.0f;
+            }
+
+            // 根据DPI缩放调整控件尺寸
+            int baseWidth = (int)(400 * dpiScale);
+            int baseHeight = (int)(300 * dpiScale);
+            int spacing = (int)(10 * dpiScale);
+            int controlHeight = (int)(30 * dpiScale);
+            int listWidth = (int)(150 * dpiScale);
+            int buttonWidth = (int)(200 * dpiScale);
+            int labelHeight = (int)(40 * dpiScale);
+
             this.Text = "账号管理";
-            this.Size = new Size(400, 300);
+            this.Size = new Size(baseWidth, baseHeight);
             this.FormBorderStyle = FormBorderStyle.FixedDialog;
             this.MaximizeBox = false;
             this.MinimizeBox = false;
@@ -69,45 +89,45 @@ namespace ymzx
 
             // 账号列表
             accountList = new ListBox();
-            accountList.Location = new Point(10, 10);
-            accountList.Size = new Size(150, 200);
+            accountList.Location = new Point(spacing, spacing);
+            accountList.Size = new Size(listWidth, (int)(150 * dpiScale));
             this.Controls.Add(accountList);
 
             // 账号名称输入框
             accountNameInput = new TextBox();
-            accountNameInput.Location = new Point(170, 10);
-            accountNameInput.Size = new Size(200, 25);
+            accountNameInput.Location = new Point(spacing * 2 + listWidth, spacing);
+            accountNameInput.Size = new Size(buttonWidth, controlHeight);
             accountNameInput.PlaceholderText = "请输入账号别名";
             this.Controls.Add(accountNameInput);
 
             // 保存账号按钮
             btnSaveAccount = new Button();
             btnSaveAccount.Text = "保存账号";
-            btnSaveAccount.Location = new Point(170, 45);
-            btnSaveAccount.Size = new Size(200, 30);
+            btnSaveAccount.Location = new Point(spacing * 2 + listWidth, spacing * 2 + controlHeight);
+            btnSaveAccount.Size = new Size(buttonWidth, controlHeight);
             btnSaveAccount.Click += BtnSaveAccount_Click;
             this.Controls.Add(btnSaveAccount);
 
             // 加载账号按钮
             btnLoadAccount = new Button();
             btnLoadAccount.Text = "加载账号";
-            btnLoadAccount.Location = new Point(170, 85);
-            btnLoadAccount.Size = new Size(200, 30);
+            btnLoadAccount.Location = new Point(spacing * 2 + listWidth, spacing * 3 + controlHeight * 2);
+            btnLoadAccount.Size = new Size(buttonWidth, controlHeight);
             btnLoadAccount.Click += BtnLoadAccount_Click;
             this.Controls.Add(btnLoadAccount);
 
             // 删除账号按钮
             btnDeleteAccount = new Button();
             btnDeleteAccount.Text = "删除账号";
-            btnDeleteAccount.Location = new Point(170, 125);
-            btnDeleteAccount.Size = new Size(200, 30);
+            btnDeleteAccount.Location = new Point(spacing * 2 + listWidth, spacing * 4 + controlHeight * 3);
+            btnDeleteAccount.Size = new Size(buttonWidth, controlHeight);
             btnDeleteAccount.Click += BtnDeleteAccount_Click;
             this.Controls.Add(btnDeleteAccount);
 
             // 当前账号信息标签
             lblCurrentAccount = new Label();
-            lblCurrentAccount.Location = new Point(10, 220);
-            lblCurrentAccount.Size = new Size(360, 40);
+            lblCurrentAccount.Location = new Point(spacing, spacing + (int)(150 * dpiScale) + spacing);
+            lblCurrentAccount.Size = new Size(baseWidth - spacing * 2, labelHeight);
             lblCurrentAccount.ForeColor = Color.Blue;
             lblCurrentAccount.Text = "当前未加载任何账号";
             this.Controls.Add(lblCurrentAccount);
